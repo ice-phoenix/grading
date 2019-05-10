@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Successfuly submitted!</h1>
+<ul>
+    <li>You submitted <samp>{{ filename }}</samp></li>
+    <li>The SHA-256 hash of the file is <samp>{{ hash }} </samp></li>
+</ul>
+{% endblock %}

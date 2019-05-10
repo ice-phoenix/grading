@@ -1,10 +1,11 @@
 from app import app
 from flask import render_template, flash, redirect, url_for
-from app.forms import RegisterForm
+from app.forms import RegisterForm, SubmitForm
 from app import db
 from app.models import Team
 import os
 from datetime import datetime
+import hashlib
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -36,3 +37,27 @@ def register():
 @app.route('/registered')
 def registered():
     return render_template('registered.html', title='Successfuly registered!')
+
+@app.route('/submit', methods=['GET', 'POST'])
+def submit():
+    form = SubmitForm()
+    if form.validate_on_submit():  
+        t_priv = form.private_id.data
+        t_id = Team.query.filter(Team.private_id==t_priv).first().id
+
+        f = form.file.data
+        now = datetime.utcnow()
+        now_str = now.strftime('%Y-%m-%d-%H-%M-%S-%f')
+
+        filename = 'team_{}_{}.zip'.format(t_id, now_str)
+        location = os.path.join(app.config['SUBMIT_DIR'], filename)
+        f.save(location)
+
+        h = ''
+        with open(location,"rb") as f:
+            bytes = f.read()
+            h = hashlib.sha256(bytes).hexdigest()
+
+        return render_template('submitted.html', filename=filename, hash=h)
+
+    return render_template('submit.html', title='Submit a solution', form=form)
