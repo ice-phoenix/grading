@@ -82,5 +82,5 @@ def validate_zip(form, field):
 
 class SubmitForm(FlaskForm):
     private_id = StringField('Private ID', validators=[no_redundant_spaces, priv_id_exists])
-    file = FileField('Solution ZIP file', validators=[FileRequired(), FileAllowed(['zip'], 'Please upload a file with .zip extension.')])
+    file = FileField('Solution ZIP file', validators=[FileRequired(), FileAllowed(['zip'], 'Please upload a file with .zip extension.'), validate_zip])
     submit = SubmitField('Send submission')
