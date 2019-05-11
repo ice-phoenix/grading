@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>You are submitting too quickly!</h1>
+<ul>
+    <li><span style="color: red;">Your last submission was only {{ time_diff }} seconds ago.</span></li>
+    <li>Please wait at least {{ sub_delay }} seconds between submissions.</li>
+</ul>
+{% endblock %}

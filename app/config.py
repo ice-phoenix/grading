@@ -7,3 +7,4 @@ class Config(object):
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SUBMIT_DIR = os.path.join(basedir, '../persistent/zips/')
+    SUBMIT_DELAY = 60  # None or number of seconds

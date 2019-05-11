@@ -71,7 +71,6 @@ def validate_zip(form, field):
                 raise ValidationError('The ZIP archives a directory rather than the solution files directly.')
 
             bad = bad_archive_contents(fn)
-            print(bad)
             if len(bad) != 0:
                 raise ValidationError('ZIP not in the required format. Disallowed contents: {}'.format(bad))
         # One of the sub-exceptions in the try-block
