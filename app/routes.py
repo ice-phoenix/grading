@@ -46,7 +46,7 @@ def registered():
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
-    form = SubmitForm()
+    form = SubmitForm(csrf_enabled=False)
     if form.validate_on_submit():  
         t_priv = form.private_id.data
         t_id = Team.query.filter(Team.private_id==t_priv).first().id
