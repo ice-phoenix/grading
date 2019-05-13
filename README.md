@@ -1,8 +1,6 @@
-# icfpcontest2019.github.io
-Web-page for the ICFP Contest 2019
+# Grading infrastructure
 
-
-# First set up
+# Set up
 
 ```
 python3 -m venv venv
@@ -14,9 +12,10 @@ flask db migrate
 flask db upgrade
 ```
 
-# Grading infrastructure
+# Running
 
 ```
+flask run
 docker run -d -p 5672:5672 rabbitmq
 celery -A app.celery worker --loglevel=info
 ```

@@ -10,8 +10,8 @@ class Config(object):
     ROOT_DIR = os.path.abspath(os.path.join(basedir, '../'))
     CHECKER_PATH = os.path.join(ROOT_DIR, 'checker')
 
-    PROBLEM_DIR = os.path.join(ROOT_DIR, 'persistent/problems')
-    TEAM_DIR = os.path.join(ROOT_DIR, 'persistent/')
+    PROBLEM_DIR = os.path.join(ROOT_DIR, 'persistent/problems/')
+    TEAM_DIR = os.path.join(ROOT_DIR, 'persistent/teams/')
 
     SUBMIT_DIR = os.path.join(ROOT_DIR, 'persistent/zips/')
     SUBMIT_DELAY = 10  # None or number of seconds

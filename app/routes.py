@@ -1,9 +1,10 @@
 from app import app
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, flash, redirect, url_for, abort
 from app.forms import RegisterForm, SubmitForm
 from app import db
 from app.models import Team, Submission
 from app.grade import grade
+from app.contest import team_dir, sub_dir
 import os
 from datetime import datetime
 import hashlib
@@ -68,6 +69,7 @@ def submit():
 
         filename = 'team_{}_{}.zip'.format(t_id, now_str)
         location = os.path.join(app.config['SUBMIT_DIR'], filename)
+        os.makedirs(os.path.dirname(location), exist_ok=True)
         f.save(location)
 
         h = ''
@@ -76,12 +78,28 @@ def submit():
             h = hashlib.sha256(bytes).hexdigest()
 
         num_coins = 0
-        grade.delay(t_id, now_str, filename, num_coins)
+        grade.delay(t_id, now_str, filename, h, num_coins)
 
-        sb = Submission(team_id=t_id, name=filename, hash=h)
+        sb = Submission(team_id=t_id, name=filename, hash=h, sub_time=now)
         db.session.add(sb)
         db.session.commit()
 
         return render_template('submitted.html', filename=filename, hash=h)
 
     return render_template('submit.html', title='Submit a solution', form=form)
+
+@app.route('/submission/<hash>')
+def submission(hash):
+    sub = Submission.query.filter(Submission.hash==hash).order_by(Submission.sub_time.desc()).first()
+    if sub is None:
+        abort(404)
+
+    t_id = sub.team_id
+    ts = sub.sub_time.strftime(ZIP_TIME_FORMAT)
+
+    score_path = os.path.join(sub_dir(t_id, ts), 'score.csv')
+    graded = os.path.exists(score_path)
+
+    with open(score_path, "r") as f:
+        report = '\n'.join(f.read().splitlines())
+        return render_template('submission.html', graded=True, filename=sub.name, hash=sub.hash, results=report)
