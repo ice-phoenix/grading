@@ -1,6 +1,7 @@
 .vscode/
 app/*.db
 persistent/
+icfpcontest2019.jar
 
 # Default GitHub python.gitignore:
 # Byte-compiled / optimized / DLL files

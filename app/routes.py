@@ -3,6 +3,7 @@ from flask import render_template, flash, redirect, url_for
 from app.forms import RegisterForm, SubmitForm
 from app import db
 from app.models import Team, Submission
+from app.grade import grade
 import os
 from datetime import datetime
 import hashlib
@@ -73,6 +74,9 @@ def submit():
         with open(location,"rb") as f:
             bytes = f.read()
             h = hashlib.sha256(bytes).hexdigest()
+
+        num_coins = 0
+        grade.delay(t_id, now_str, filename, num_coins)
 
         sb = Submission(team_id=t_id, name=filename, hash=h)
         db.session.add(sb)

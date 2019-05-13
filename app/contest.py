@@ -1,6 +1,6 @@
-from app import app, db
-from app.models import Team
+from app import app, db, celery
+from app.models import Team, Submission
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db, 'Team': Team}
+    return {'celery': celery, 'db': db, 'Team': Team, 'Submission': Submission}

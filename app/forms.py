@@ -47,8 +47,8 @@ def has_top_level_dir(namelist):
 # TODO: make better
 def bad_archive_contents(namelist):
     num_probs = 100
-    acc_sol = ['prob-{}.sol'.format(k) for k in range(1, num_probs + 1)]
-    acc_buy = ['prob-{}.buy'.format(k) for k in range(1, num_probs + 1)]
+    acc_sol = ['prob-{:03d}.sol'.format(k) for k in range(1, num_probs + 1)]
+    acc_buy = ['prob-{:03d}.buy'.format(k) for k in range(1, num_probs + 1)]
     acc = set(acc_sol + acc_buy)
 
     bad = [x for x in namelist if x not in acc]
