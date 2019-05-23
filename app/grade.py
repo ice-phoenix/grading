@@ -37,11 +37,20 @@ def symlink_force(target, link_name):
             os.remove(temp_link_name)
 
 @celery.task
-def grade(t_id, ts, filename, hash, coins):
+def grade(t_id, t_name, ts, filename, hash, coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
     logger.info(f'Processing {hash}')
     logger.info(f'Extracting archive {location}')
+
+    td = team_dir(t_id)
+    os.makedirs(td, exist_ok=True)
+
+    # Create the name file if it doesn't exist
+    nf = os.path.join(td, 'name')
+    if not os.path.exists(nf):
+        with open(nf, 'w') as f:
+            f.write(t_name)
 
     # Extract submission in the appropriate directory
     sd = sub_dir(t_id, ts)
@@ -61,10 +70,8 @@ def grade(t_id, ts, filename, hash, coins):
 
     # Call checker
     os.chdir(app.config['ROOT_DIR'])
-    subprocess.call([chk, 'team', '-p', pd, '-s', sd, '-o', rf, '-v', 'true'])
+    subprocess.call([chk, 'team', '-p', pd, '-s', sd, '-o', rf])
 
-    td = team_dir(t_id)
-    os.makedirs(td, exist_ok=True)
     link = os.path.join(td, 'latest-graded')
     graded_before = os.path.exists(link)
 

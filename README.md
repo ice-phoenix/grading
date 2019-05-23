@@ -5,7 +5,7 @@
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install python-dotenv flask flask-wtf flask-sqlalchemy flask-migrate celery
+pip install python-dotenv flask flask-wtf flask-sqlalchemy flask-migrate celery flower
 
 flask db init
 flask db migrate
@@ -18,8 +18,9 @@ You also **need to** compile [the checker](https://github.com/icfpcontest2019/ic
 
 ```
 flask run
-docker run -d -p 5672:5672 rabbitmq
-celery -A app.celery worker --loglevel=info
+docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+celery -A app.celery worker --loglevel=info -E
+celery flower -A app.celery --address=127.0.0.1 --port=5555 --basic_auth=admin:password --persistent --natural_time=false
 ```
 
 # Submit with CURL

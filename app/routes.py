@@ -49,7 +49,9 @@ def submit():
     form = SubmitForm(meta={'csrf': False})
     if form.validate_on_submit():  
         t_priv = form.private_id.data
-        t_id = Team.query.filter(Team.private_id==t_priv).first().id
+        team = Team.query.filter(Team.private_id==t_priv).first()
+        t_id = team.id
+        t_name = team.name
 
         # Find previous submission time (if exists)
         prev_sub = Submission.query.filter(Submission.team_id==t_id).order_by(Submission.sub_time.desc()).first()
@@ -78,7 +80,7 @@ def submit():
             h = hashlib.sha256(bytes).hexdigest()
 
         num_coins = 0
-        grade.delay(t_id, now_str, filename, h, num_coins)
+        grade.delay(t_id, t_name, now_str, filename, h, num_coins)
 
         sb = Submission(team_id=t_id, name=filename, hash=h, sub_time=now)
         db.session.add(sb)
