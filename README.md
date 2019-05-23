@@ -12,6 +12,8 @@ flask db migrate
 flask db upgrade
 ```
 
+You also **need to** compile [the checker](https://github.com/icfpcontest2019/icfpcontest2019) and place `icfpcontest2019.jar` in the root of this repository.
+
 # Running
 
 ```

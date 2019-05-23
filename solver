@@ -1,0 +1,2 @@
+#!/bin/bash
+./checker solver ./persistent/problems $*

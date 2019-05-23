@@ -100,6 +100,9 @@ def submission(hash):
     score_path = os.path.join(sub_dir(t_id, ts), 'score.csv')
     graded = os.path.exists(score_path)
 
-    with open(score_path, "r") as f:
-        report = '\n'.join(f.read().splitlines())
-        return render_template('submission.html', graded=True, filename=sub.name, hash=sub.hash, results=report)
+    if graded:
+        with open(score_path, "r") as f:
+            report = '\n'.join(f.read().splitlines())
+            return render_template('submission.html', graded=True, filename=sub.name, hash=sub.hash, results=report)
+    else:
+        return render_template('submission.html', graded=False, filename=sub.name, hash=sub.hash)
