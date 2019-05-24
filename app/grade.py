@@ -36,7 +36,9 @@ def symlink_force(target, link_name):
         if os.path.exists(temp_link_name):
             os.remove(temp_link_name)
 
-@celery.task
+# acks_late=True means the task is ACKed after it finishes executing
+# if worker crashes, it is retried!
+@celery.task(acks_late=True)
 def grade(t_id, t_name, ts, filename, hash, coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
@@ -70,7 +72,13 @@ def grade(t_id, t_name, ts, filename, hash, coins):
 
     # Call checker
     os.chdir(app.config['ROOT_DIR'])
-    subprocess.call([chk, 'team', '-p', pd, '-s', sd, '-o', rf])
+    # We use this rather than subprocess.call() to ensure the checker process is
+    # killed when the Celery worker is killed
+    process = subprocess.Popen([chk, 'team', '-p', pd, '-s', sd, '-o', rf],
+	                                      stdout=subprocess.PIPE,
+	                                      stderr=subprocess.STDOUT)
+    _ = process.communicate()[0]
+    _ = process.wait()
 
     link = os.path.join(td, 'latest-graded')
     graded_before = os.path.exists(link)
