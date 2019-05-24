@@ -1,5 +1,5 @@
 .vscode/
-app/*.db
+*.db
 flower
 persistent/
 icfpcontest2019.jar
