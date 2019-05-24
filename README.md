@@ -5,7 +5,7 @@
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install python-dotenv flask flask-wtf flask-sqlalchemy flask-migrate celery flower
+pip install -r requirements.txt
 
 flask db init
 flask db migrate
