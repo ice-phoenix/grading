@@ -39,7 +39,7 @@ def symlink_force(target, link_name):
 
 # acks_late=True means the task is ACKed after it finishes executing
 # if worker crashes, it is retried!
-@celery.task(acks_late=True)
+@celery.task(autoretry_for=(Exception,), acks_late=True)
 def grade(t_id, t_name, ts, filename, hash, coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
@@ -81,7 +81,9 @@ def grade(t_id, t_name, ts, filename, hash, coins):
     out = process.communicate()[0]
     _ = process.wait()
     # Hack to get output into stderr
-    print(out, file=sys.stderr)
+    if out != b'Grading complete\n':
+        print(out, file=sys.stderr)
+        raise Exception('Checker failed.')
 
     link = os.path.join(td, 'latest-graded')
     graded_before = os.path.exists(link)
