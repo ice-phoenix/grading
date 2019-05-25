@@ -6,6 +6,7 @@ import time
 import os, tempfile
 from zipfile import ZipFile
 import subprocess
+import sys
 
 logger = get_task_logger(__name__)
 
@@ -77,8 +78,10 @@ def grade(t_id, t_name, ts, filename, hash, coins):
     process = subprocess.Popen([chk, 'team', '-p', pd, '-s', sd, '-o', rf],
 	                                      stdout=subprocess.PIPE,
 	                                      stderr=subprocess.STDOUT)
-    _ = process.communicate()[0]
+    out = process.communicate()[0]
     _ = process.wait()
+    # Hack to get output into stderr
+    print(out, file=sys.stderr)
 
     link = os.path.join(td, 'latest-graded')
     graded_before = os.path.exists(link)
