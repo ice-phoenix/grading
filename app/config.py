@@ -15,6 +15,7 @@ class Config(object):
 
     PROBLEM_DIR = os.path.join(PERSISTENT_DIR, 'problems/')
     TEAM_DIR = os.path.join(PERSISTENT_DIR, 'teams/')
+    GRADES_DIR = os.path.join(PERSISTENT_DIR, 'grades/')
     SUBMIT_DIR = os.path.join(PERSISTENT_DIR, 'zips/')
     SUBMIT_DELAY = 10  # None or number of seconds
 

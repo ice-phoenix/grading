@@ -1,12 +1,14 @@
 from app import app, celery
 from celery.utils.log import get_task_logger
-from app.contest import team_dir, sub_dir
+from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT
 import random
 import time
 import os, tempfile
 from zipfile import ZipFile
+from datetime import datetime
 import subprocess
 import sys
+import shutil
 
 logger = get_task_logger(__name__)
 
@@ -39,8 +41,8 @@ def symlink_force(target, link_name):
 
 # acks_late=True means the task is ACKed after it finishes executing
 # if worker crashes, it is retried!
-@celery.task(autoretry_for=(Exception,), acks_late=True)
-def grade(t_id, t_name, ts, filename, hash, coins):
+@celery.task(bind=True, autoretry_for=(Exception,), acks_late=True, default_retry_delay=30)
+def grade(self, t_id, t_name, ts, filename, hash, coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
     logger.info(f'Processing {hash}')
@@ -73,8 +75,11 @@ def grade(t_id, t_name, ts, filename, hash, coins):
 
     # Call checker
     os.chdir(app.config['ROOT_DIR'])
+    checker_start_time = datetime.utcnow()
+
     # We use this rather than subprocess.call() to ensure the checker process is
     # killed when the Celery worker is killed
+
     process = subprocess.Popen([chk, 'team', '-p', pd, '-s', sd, '-o', rf],
 	                                      stdout=subprocess.PIPE,
 	                                      stderr=subprocess.STDOUT)
@@ -85,6 +90,35 @@ def grade(t_id, t_name, ts, filename, hash, coins):
         print(out, file=sys.stderr)
         raise Exception('Checker failed.')
 
+    checker_end_time = datetime.utcnow()
+
+    # Compute timing information
+    task_received_time = datetime.strptime(ts, ZIP_TIME_FORMAT)
+    queue_time = (checker_start_time - task_received_time).total_seconds()
+    checker_time = (checker_end_time - checker_start_time).total_seconds()
+    total_time = queue_time + checker_time
+
+    # Put the hash in the grades directory
+    gd = grades_sub_dir(t_id, ts)
+    os.makedirs(gd, exist_ok=True)
+
+    hf = os.path.join(gd, 'hash')
+    with open(hf, 'w') as f:
+        f.write(hash)
+
+    # Write timing information
+    for dir in [sd, gd]:
+        tf = os.path.join(dir, 'timing.txt')
+        with open(tf, 'w') as f:
+            info = "Task ID: {}\nQueue waiting time: {}\nChecker time: {}\nTotal waiting time: {}\n".format(self.request.id, queue_time, checker_time, total_time)
+            f.write(info)
+
+    # Copy score from submission directory to grades directory
+    src_fn = rf
+    dst_fn = os.path.join(gd, 'score.csv')
+    shutil.copyfile(src_fn, dst_fn)
+
+    # Update latest
     link = os.path.join(td, 'latest-graded')
     graded_before = os.path.exists(link)
 

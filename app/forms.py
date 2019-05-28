@@ -40,9 +40,9 @@ def priv_id_exists(form, field):
     if not already_exists:
         raise ValidationError('Private ID not found. Have you mistyped it?')
 
-def has_top_level_dir(namelist):
+def top_level_dirs(namelist):
     with_tld = [x for x in namelist if '/' in x]
-    return len(with_tld) > 0
+    return with_tld
 
 # TODO: make better
 def bad_archive_contents(namelist):
@@ -67,8 +67,9 @@ def validate_zip(form, field):
                 raise ValidationError('The ZIP archive is corrupt: first bad file is {}.'.format(ret))
          
             fn = z.namelist()
-            if has_top_level_dir(fn):
-                raise ValidationError('The ZIP archives a directory rather than the solution files directly.')
+            tlds = top_level_dirs(fn)
+            if len(tlds) > 0:
+                raise ValidationError('The ZIP archives a directory rather than the solution files directly. Disallowed: {}'.format(tlds))
 
             bad = bad_archive_contents(fn)
             if len(bad) != 0:

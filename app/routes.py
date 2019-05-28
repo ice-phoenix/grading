@@ -4,14 +4,13 @@ from app.forms import RegisterForm, SubmitForm
 from app import db
 from app.models import Team, Submission
 from app.grade import grade
-from app.contest import team_dir, sub_dir
+from app.contest import team_dir, sub_dir, ZIP_TIME_FORMAT
 import os
 from datetime import datetime
 import hashlib
 
 ORIG_TIME = '2000-01-01 00:00:00.000000'
 DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
-ZIP_TIME_FORMAT = '%Y-%m-%d-%H-%M-%S-%f'
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
