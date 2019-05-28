@@ -1,6 +1,6 @@
 from app import app, celery
 from celery.utils.log import get_task_logger
-from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT
+from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT, HASH_FILE, SCORE_FILE, TIMING_FILE
 import random
 import time
 import os, tempfile
@@ -42,7 +42,7 @@ def symlink_force(target, link_name):
 # acks_late=True means the task is ACKed after it finishes executing
 # if worker crashes, it is retried!
 @celery.task(bind=True, autoretry_for=(Exception,), acks_late=True, default_retry_delay=30)
-def grade(self, t_id, t_name, ts, filename, hash, coins):
+def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
     logger.info(f'Processing {hash}')
@@ -64,14 +64,14 @@ def grade(self, t_id, t_name, ts, filename, hash, coins):
     with ZipFile(location) as zip:
         zip.extractall()
 
-    hf = os.path.join(sd, 'hash')
+    hf = os.path.join(sd, HASH_FILE)
     with open(hf, 'w') as f:
         f.write(hash)
 
     logger.info(f'Running checker on {str(sd)}')
     chk = app.config['CHECKER_PATH']
     pd = app.config['PROBLEM_DIR']
-    rf = os.path.join(sd, 'score.csv')
+    rf = os.path.join(sd, SCORE_FILE)
 
     # Call checker
     os.chdir(app.config['ROOT_DIR'])
@@ -99,23 +99,23 @@ def grade(self, t_id, t_name, ts, filename, hash, coins):
     total_time = queue_time + checker_time
 
     # Put the hash in the grades directory
-    gd = grades_sub_dir(t_id, ts)
+    gd = grades_sub_dir(t_priv, ts)
     os.makedirs(gd, exist_ok=True)
 
-    hf = os.path.join(gd, 'hash')
+    hf = os.path.join(gd, HASH_FILE)
     with open(hf, 'w') as f:
         f.write(hash)
 
     # Write timing information
     for dir in [sd, gd]:
-        tf = os.path.join(dir, 'timing.txt')
+        tf = os.path.join(dir, TIMING_FILE)
         with open(tf, 'w') as f:
             info = "Task ID: {}\nQueue waiting time: {}\nChecker time: {}\nTotal waiting time: {}\n".format(self.request.id, queue_time, checker_time, total_time)
             f.write(info)
 
     # Copy score from submission directory to grades directory
     src_fn = rf
-    dst_fn = os.path.join(gd, 'score.csv')
+    dst_fn = os.path.join(gd, SCORE_FILE)
     shutil.copyfile(src_fn, dst_fn)
 
     # Update latest

@@ -80,7 +80,7 @@ def submit():
 
         num_coins = 0
         # TODO: this will just timeout if the broker is offline
-        grade.delay(t_id, t_name, now_str, filename, h, num_coins)
+        grade.delay(t_id, t_priv, t_name, now_str, filename, h, num_coins)
 
         sb = Submission(team_id=t_id, name=filename, hash=h, sub_time=now)
         db.session.add(sb)
