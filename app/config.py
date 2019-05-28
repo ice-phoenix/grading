@@ -13,6 +13,8 @@ class Config(object):
 
     CHECKER_PATH = os.path.join(ROOT_DIR, 'checker')
 
+    PRIV_ID_LEN = 12
+
     PROBLEM_DIR = os.path.join(PERSISTENT_DIR, 'problems/')
     TEAM_DIR = os.path.join(PERSISTENT_DIR, 'teams/')
     GRADES_DIR = os.path.join(PERSISTENT_DIR, 'grades/')

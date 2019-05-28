@@ -6,6 +6,9 @@ ZIP_TIME_FORMAT = '%Y-%m-%d-%H-%M-%S-%f'
 HASH_FILE = "hash.txt"
 SCORE_FILE = "score.csv"
 TIMING_FILE = "timing.txt"
+SUBMISSIONS_FILE = "submissions.txt"
+TEAM_NAME_FILE = "team_name.txt"
+TEAM_ID_FILE = "team_id.txt"
 
 def team_dir(t_id):
     return os.path.join(app.config['TEAM_DIR'], f'{t_id}/')

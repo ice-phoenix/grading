@@ -4,7 +4,7 @@ from app.forms import RegisterForm, SubmitForm
 from app import db
 from app.models import Team, Submission
 from app.grade import grade
-from app.contest import team_dir, sub_dir, ZIP_TIME_FORMAT
+from app.contest import team_dir, sub_dir, grades_dir, ZIP_TIME_FORMAT, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE
 import os
 from datetime import datetime
 import hashlib
@@ -19,7 +19,7 @@ def register():
     if form.validate_on_submit():
         t_name = form.team_name.data
         t_email = form.email.data
-        t_priv = os.urandom(8).hex()    # Generate private ID
+        t_priv = os.urandom(app.config['PRIV_ID_LEN']).hex()    # Generate private ID
 
         t = Team(name=t_name, email=t_email, private_id=t_priv)
         db.session.add(t)
@@ -78,15 +78,36 @@ def submit():
             bytes = f.read()
             h = hashlib.sha256(bytes).hexdigest()
 
+        # Schedule for grading
         num_coins = 0
         # TODO: this will just timeout if the broker is offline
         grade.delay(t_id, t_priv, t_name, now_str, filename, h, num_coins)
 
+        # Register submission in database
         sb = Submission(team_id=t_id, name=filename, hash=h, sub_time=now)
         db.session.add(sb)
         db.session.commit()
 
-        return render_template('submitted.html', filename=filename, hash=h)
+        # Acknowledge submission to team
+        gd = grades_dir(t_priv)
+        os.makedirs(gd, exist_ok=True)
+
+        sf = os.path.join(gd, SUBMISSIONS_FILE)
+        with open(sf, 'a+') as f:
+            f.write('{} -> {}\n'.format(now_str, h))
+
+        # Create team identifiers in case they don't exist
+        nf = os.path.join(gd, TEAM_NAME_FILE)
+        with open(nf, 'w') as f:
+            f.write('{}\n'.format(t_name))
+
+        idf = os.path.join(gd, TEAM_ID_FILE)
+        with open(idf, 'w') as f:
+            f.write('{}\n'.format(t_id))
+
+        team_folder = '/grades/{}/'.format(t_priv)
+
+        return render_template('submitted.html', filename=filename, hash=h, team_folder=team_folder)
 
     return render_template('submit.html', title='Submit a solution', form=form)
 
