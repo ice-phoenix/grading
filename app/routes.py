@@ -110,22 +110,3 @@ def submit():
         return render_template('submitted.html', filename=filename, hash=h, team_folder=team_folder)
 
     return render_template('submit.html', title='Submit a solution', form=form)
-
-@app.route('/submission/<hash>')
-def submission(hash):
-    sub = Submission.query.filter(Submission.hash==hash).order_by(Submission.sub_time.desc()).first()
-    if sub is None:
-        abort(404)
-
-    t_id = sub.team_id
-    ts = sub.sub_time.strftime(ZIP_TIME_FORMAT)
-
-    score_path = os.path.join(sub_dir(t_id, ts), 'score.csv')
-    graded = os.path.exists(score_path)
-
-    if graded:
-        with open(score_path, "r") as f:
-            report = '\n'.join(f.read().splitlines())
-            return render_template('submission.html', graded=True, filename=sub.name, hash=sub.hash, results=report)
-    else:
-        return render_template('submission.html', graded=False, filename=sub.name, hash=sub.hash)
