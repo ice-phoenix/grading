@@ -51,22 +51,12 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
     td = team_dir(t_id)
     os.makedirs(td, exist_ok=True)
 
-    # Create the name file if it doesn't exist
-    nf = os.path.join(td, 'name')
-    if not os.path.exists(nf):
-        with open(nf, 'w') as f:
-            f.write(t_name)
-
     # Extract submission in the appropriate directory
     sd = sub_dir(t_id, ts)
     os.makedirs(sd, exist_ok=True)
     os.chdir(sd)
     with ZipFile(location) as zip:
         zip.extractall()
-
-    hf = os.path.join(sd, HASH_FILE)
-    with open(hf, 'w') as f:
-        f.write(hash)
 
     logger.info(f'Running checker on {str(sd)}')
     chk = app.config['CHECKER_PATH']
@@ -114,6 +104,7 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
             f.write(info)
 
     # Copy score from submission directory to grades directory
+    # TODO: sanitize
     src_fn = rf
     dst_fn = os.path.join(gd, SCORE_FILE)
     shutil.copyfile(src_fn, dst_fn)

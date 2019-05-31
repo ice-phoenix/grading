@@ -8,6 +8,7 @@ from app.contest import team_dir, sub_dir, grades_dir, ZIP_TIME_FORMAT, SUBMISSI
 import os
 from datetime import datetime
 import hashlib
+import random, string
 
 ORIG_TIME = '2000-01-01 00:00:00.000000'
 DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
@@ -110,3 +111,21 @@ def submit():
         return render_template('submitted.html', filename=filename, hash=h, team_folder=team_folder)
 
     return render_template('submit.html', title='Submit a solution', form=form)
+
+# TESTING
+@app.route('/testing/register/<int:n>')
+def register_many(n):
+    ids = []
+
+    for i in range(n):
+        t_name = 'test_' ''.join([random.choice(string.ascii_letters) for n in range(12)])
+        t_email = '{}@example.com'.format(t_name)
+        t_priv = os.urandom(app.config['PRIV_ID_LEN']).hex()    # Generate private ID
+
+        ids.append(t_priv)
+
+        t = Team(name=t_name, email=t_email, private_id=t_priv)
+        db.session.add(t)
+
+    db.session.commit()
+    return '\n'.join(ids)

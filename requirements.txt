@@ -5,3 +5,5 @@ flask-sqlalchemy
 flask-migrate
 celery
 flower
+numpy
+pandas
