@@ -112,7 +112,8 @@ def parse_sizes_file(path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute rankings.')
 
-    default_time = datetime.utcnow().strftime(contest.ZIP_TIME_FORMAT)
+    start = datetime.utcnow()
+    default_time = start.strftime(contest.ZIP_TIME_FORMAT)
 
     parser.add_argument('-t', metavar='TIME', default=default_time, help='latest submission time to consider')
     parser.add_argument('-p', metavar='PATH', required=True, help='problems folder')
@@ -130,8 +131,11 @@ if __name__ == '__main__':
     ranking.index += 1
     ranking.drop(columns=['index', 'id', 'time'], inplace=True)
 
-    csv_output = os.path.join(args.output_folder, args.t + '.csv')
-    html_output = os.path.join(args.output_folder, args.t + '.html')
+    # Remove seconds and microseconds from filename
+    filename = start.strftime(contest.ZIP_TIME_MINUTE)
+
+    csv_output = os.path.join(args.output_folder, filename + '.csv')
+    html_output = os.path.join(args.output_folder, filename + '.html')
 
     # Create folder if it doesn't exist
     os.makedirs(args.output_folder, exist_ok=True)

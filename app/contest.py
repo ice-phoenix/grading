@@ -3,6 +3,7 @@ from app.models import Team, Submission
 import os
 
 ZIP_TIME_FORMAT = '%Y-%m-%d-%H-%M-%S-%f'
+ZIP_TIME_MINUTE = '%Y-%m-%d-%H-%M'
 HASH_FILE = "hash.txt"
 SCORE_FILE = "score.csv"
 TIMING_FILE = "timing.txt"
