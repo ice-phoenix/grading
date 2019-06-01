@@ -9,6 +9,7 @@ import pandas as pd
 
 NUM_DIGITS = 2
 FLOAT_FORMAT = '%.{}f'.format(NUM_DIGITS)
+TEAM_NAME_MAX_LEN = 120
 
 def get_team_info(root, f=contest.TEAM_ID_FILE):
     info = 0
@@ -152,7 +153,9 @@ if __name__ == '__main__':
     </html>"""
 
     time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
-    page=wrapper.format(time, ranking.to_html(float_format=FLOAT_FORMAT, justify='center'))
+    pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
+    table = ranking.to_html(float_format=FLOAT_FORMAT, justify='center')
+    page=wrapper.format(time, table)
 
     with open(html_latest, 'w') as f:
         f.write(page)

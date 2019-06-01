@@ -13,6 +13,8 @@ import random, string
 ORIG_TIME = '2000-01-01 00:00:00.000000'
 DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
+# MAIN CONTEST
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -118,7 +120,7 @@ def register_many(n):
     ids = []
 
     for i in range(n):
-        t_name = 'test_' ''.join([random.choice(string.ascii_letters) for n in range(12)])
+        t_name = 'test_' + ''.join([random.choice(string.ascii_letters) for n in range(12)])
         t_email = '{}@example.com'.format(t_name)
         t_priv = os.urandom(app.config['PRIV_ID_LEN']).hex()    # Generate private ID
 
