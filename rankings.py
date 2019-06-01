@@ -116,13 +116,9 @@ if __name__ == '__main__':
     parser.add_argument('-t', metavar='TIME', default=default_time, help='latest submission time to consider')
     parser.add_argument('-p', metavar='PATH', required=True, help='problems folder')
     parser.add_argument('-g', metavar='PATH', required=True, help='grades folder')
-    parser.add_argument('--csv-output', metavar='PATH', help='output CSV file')
-    parser.add_argument('--html-output', metavar='PATH', help='output HTML file')
+    parser.add_argument('--output-folder', metavar='PATH', required=True, help='output path to save CSV and HTML files')
 
     args = parser.parse_args()
-
-    if not (args.csv_output or args.html_output):
-        parser.error("At least one of --csv-output or --html-output must be given.")
 
     # Parse multiplier
     mutliplier = parse_sizes_file(os.path.join(args.p, contest.SIZES_FILE))
@@ -133,7 +129,30 @@ if __name__ == '__main__':
     ranking.index += 1
     ranking.drop(columns=['index', 'id', 'time'], inplace=True)
 
-    if args.csv_output:
-        ranking.to_csv(args.csv_output, float_format=FLOAT_FORMAT, index=True)
-    if args.html_output:
-        ranking.to_html(args.html_output, float_format=FLOAT_FORMAT, justify='center')
+    csv_output = os.path.join(args.output_folder, args.t + '.csv')
+    html_output = os.path.join(args.output_folder, args.t + '.html')
+
+    # Create folder if it doesn't exist
+    os.makedirs(args.output_folder, exist_ok=True)
+
+    ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True)
+    ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center')
+
+    html_latest = os.path.join(args.output_folder, 'latest.html')
+    wrapper = """<!DOCTYPE html>
+    <html>
+    <head>
+    <title>Live Rankings</title>
+    </head>
+    <center>
+    <h1>Live Rankings</h1>
+    <pre>Last updated: {}</pre>
+    {}
+    </center>
+    </html>"""
+
+    time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
+    page=wrapper.format(time, ranking.to_html(float_format=FLOAT_FORMAT, justify='center'))
+
+    with open(html_latest, 'w') as f:
+        f.write(page)
