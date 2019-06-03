@@ -4,13 +4,18 @@ import argparse
 import subprocess
 import os, shutil
 import json
-import numpy as np
 import pandas as pd
+import random
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
 
 """
 ./checker matrix <task_file.desc> <task_file.mat>
 ./checker block -p <current_task.mat> -c <lambda.chain> -b <blockNum> -s <submissionFolder> -o <path-to-scores.csv> -v <true>
 """
+
+NOTIFY_URL = "http://localhost:5000/notify/block_created"
 
 def process_scores(score_file):
     sc = pd.read_csv(score_file, header=None)
@@ -26,9 +31,11 @@ def process_scores(score_file):
 def select_next_puzzle(scores):
     # Remove all BAD entries and limit to N entries
     scores = scores[scores[2] == 'GOOD'].head(contest.BLOCK_PUZZLE_SEL)
-    # Return a random entry
-    s = scores.sample(1)
-    return s.iat[0, 0]
+    # Return a random entry: there's a bug in DataFrame.sample! (so we roll our own)
+    r = 0
+    if len(scores) > 1:
+        r = random.randrange(0, len(scores))
+    return scores.iat[r, 0]
 
 def allocate_coins(balance_file, scores):
     balance = {}
@@ -37,7 +44,8 @@ def allocate_coins(balance_file, scores):
 
     new_balance = {}
     total_shares = scores[1].sum()
-    for row_id in scores:
+
+    for row_id in range(len(scores)):
         row = scores.loc[row_id]
         # Important: team must be str, not int
         team, share = str(row[0]), row[1]/total_shares
@@ -105,3 +113,9 @@ if __name__ == '__main__':
 
     nsdp = os.path.join(next_block_path, contest.BLOCK_SUBMISSIONS_DIR)
     os.makedirs(nsdp, exist_ok=True)
+
+    # Notify server that block has been created
+    post_fields = {'secret': app.config['NOTIFY_SECRET_KEY'], 'block': next_b}
+    request = Request(NOTIFY_URL, urlencode(post_fields).encode())
+    response = urlopen(request).read().decode()
+    print(response)

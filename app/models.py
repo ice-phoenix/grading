@@ -21,5 +21,13 @@ class Submission(db.Model):
     def __repr__(self):
         return '<Submission {} from team {} at time {}>'.format(self.hash, self.team_id, self.sub_time)
 
+class Block(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    scheduled_proc = db.Column(db.Boolean(), default=False)
+    created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
-
+class BlockSubmission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    block_num = db.Column(db.Integer, index=True)
+    team_id = db.Column(db.Integer, index=True)
+    sub_time = db.Column(db.DateTime, index=True, default=datetime.utcnow)

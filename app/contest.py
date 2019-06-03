@@ -17,9 +17,13 @@ SIZES_FILE = "sizes.csv"
 BLOCK_SUBSIDY = 1000 * 1000
 BLOCK_PUZZLE_SEL = 10   # consider this many top-scoring proposals
 
+BLOCK_WAIT_FOR_SUBS = 1
+BLOCK_WAIT_FOR_SECS = 60
+
 BLOCK_CHAIN_DESC = "lambda.chain"
 BLOCK_PROBLEM_DESC = "puzzle.desc"
 BLOCK_PROBLEM_MAT = "puzzle.mat"
+BLOCK_SOL_FILE = "puzzle.sol"
 BLOCK_NEXT_PUZZLE_FILE = "next-puzzle.desc"
 BLOCK_BALANCES_FILE = "balances.json"
 BLOCK_CONDITIONS_FILE = "next-puzzle.cond"
@@ -37,6 +41,8 @@ def sub_dir(t_id, ts):
 def grades_sub_dir(t_priv, ts):
     return os.path.join(grades_dir(t_priv), f'{ts}/')
 
+def block_sub_dir(t_id, block_num):
+    return os.path.join(app.config['BLOCKS_DIR'], f'{block_num}', BLOCK_SUBMISSIONS_DIR, f'{t_id}')
 
 @app.shell_context_processor
 def make_shell_context():

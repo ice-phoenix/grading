@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
+from wtforms import IntegerField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, ValidationError
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 import tempfile, zipfile
@@ -83,4 +83,11 @@ def validate_zip(form, field):
 class SubmitForm(FlaskForm):
     private_id = StringField('Private ID', validators=[no_redundant_spaces, priv_id_exists])
     file = FileField('Solution ZIP file', validators=[FileRequired(), FileAllowed(['zip'], 'Please upload a file with .zip extension.'), validate_zip])
+    submit = SubmitField('Send submission')
+
+class LambdaSubmitForm(FlaskForm):
+    private_id = StringField('Private ID', validators=[no_redundant_spaces, priv_id_exists])
+    block_num = IntegerField('Block number')
+    solution = FileField('Solution file', validators=[FileRequired(), FileAllowed(['sol'], 'Solutions must have a .sol extension.')])
+    puzzle = FileField('Puzzle file', validators=[FileRequired(), FileAllowed(['desc'], 'Puzzle must have a .desc extension.')])
     submit = SubmitField('Send submission')
