@@ -5,6 +5,7 @@ class Config(object):
     ROOT_DIR = os.path.abspath(os.path.join(basedir, '../'))
     PERSISTENT_DIR = os.environ.get('PERSISTENT_DIR') or os.path.join(ROOT_DIR, 'persistent')
     DB_DIR = os.environ.get('DB_DIR') or ROOT_DIR
+    BLOCKS_DIR = os.environ.get('BLOCKS_DIR') or os.path.join(PERSISTENT_DIR, 'blocks')
 
     SECRET_KEY = os.environ.get('SECRET_KEY') or '6cb49381bd6a6f239220e42'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \

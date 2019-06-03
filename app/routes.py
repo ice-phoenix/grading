@@ -114,6 +114,7 @@ def submit():
 
     return render_template('submit.html', title='Submit a solution', form=form)
 
+# TODO: remove
 # TESTING
 @app.route('/testing/register/<int:n>')
 def register_many(n):

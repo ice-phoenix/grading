@@ -36,3 +36,9 @@ Assumes `problems/` contains `sizes.csv`:
 ```
 ./rankings.py -p persistent/problems/ -g persistent/grades/ --csv-output ranking.csv --html-output ranking.html
 ```
+
+# Block checker
+
+```
+./block -b <num>
+```

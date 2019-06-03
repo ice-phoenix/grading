@@ -12,6 +12,19 @@ TEAM_NAME_FILE = "team_name.txt"
 TEAM_ID_FILE = "team_id.txt"
 SIZES_FILE = "sizes.csv"
 
+
+
+BLOCK_SUBSIDY = 1000 * 1000
+BLOCK_PUZZLE_SEL = 10   # consider this many top-scoring proposals
+
+BLOCK_CHAIN_DESC = "lambda.chain"
+BLOCK_PROBLEM_DESC = "puzzle.desc"
+BLOCK_PROBLEM_MAT = "puzzle.mat"
+BLOCK_NEXT_PUZZLE_FILE = "next-puzzle.desc"
+BLOCK_BALANCES_FILE = "balances.json"
+BLOCK_CONDITIONS_FILE = "next-puzzle.cond"
+BLOCK_SUBMISSIONS_DIR = "submissions"
+
 def team_dir(t_id):
     return os.path.join(app.config['TEAM_DIR'], f'{t_id}/')
 
