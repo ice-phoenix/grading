@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, StringField, SubmitField
+from wtforms import IntegerField, StringField, SubmitField, TextAreaField, TextField
 from wtforms.validators import DataRequired, Email, ValidationError
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 import tempfile, zipfile
@@ -27,18 +27,33 @@ def no_redundant_spaces(form, field):
         raise ValidationError('Please remove leading/trailing whitespace.')
 
 class RegisterForm(FlaskForm):
-    team_name = StringField('Team Name', validators=[DataRequired(message=u'You must enter a team name.'), name_unique, no_redundant_spaces])
+    team_name = StringField('Team name', validators=[DataRequired(message=u'You must enter a team name.'), name_unique, no_redundant_spaces])
     email = StringField('Email', validators=[Email(message=u'That\'s not a valid email address.'), email_unique])
     submit = SubmitField('Register')
 
-
-# Submission
+# Profile
 def priv_id_exists(form, field):
     priv_id = field.data
     q = db.session.query(Team).filter(Team.private_id == priv_id)
     already_exists = db.session.query(q.exists()).scalar()
     if not already_exists:
         raise ValidationError('Private ID not found. Have you mistyped it?')
+
+class PrivForm(FlaskForm):
+    private_id = StringField('What is your private ID?', validators=[priv_id_exists])
+    submit = SubmitField('Login')
+
+class ProfileForm(FlaskForm):
+    team_name = StringField('Team name', validators=[DataRequired(message=u'You must enter a team name.'), no_redundant_spaces])
+    email = StringField('Email', validators=[Email(message=u'That\'s not a valid email address.')])
+    members = TextAreaField('Team members')
+    countries = TextField('Countries')
+    langs = TextField('Programming languages')
+    file = FileField('Source code ZIP', validators=[FileAllowed(['zip'], 'Please upload a file with .zip extension.')])
+    comments = TextAreaField('Comments')
+    submit = SubmitField('Update profile')
+
+# Submission
 
 def top_level_dirs(namelist):
     with_tld = [x for x in namelist if '/' in x]

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Update your profile</h1>
+<form action="" method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    
+    <p>
+        <label for="{{ form.team_name.id }}">{{ form.team_name.label }}</label>
+        <br>
+        {{ form.team_name() }}
+        {% for error in form.team_name.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        <label for="{{ form.email.id }}">{{ form.email.label }}</label>
+        <br>
+        {{ form.email() }}
+        {% for error in form.email.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        <label for="{{ form.members.id }}">{{ form.members.label }}</label>
+        (one per line)
+        <br>
+        {{ form.members() }}
+        {% for error in form.members.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        <label for="{{ form.countries.id }}">{{ form.countries.label }}</label>
+        (comma-separated <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3#Officially_assigned_code_elements">three-letter country codes</a>)
+        <br>
+        {{ form.countries() }}
+        {% for error in form.countries.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    
+    <p>
+        <label for="{{ form.langs.id }}">{{ form.langs.label }}</label>
+        (comma-separated)
+        <br>
+        {{ form.langs() }}
+        {% for error in form.langs.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <p>
+        <label for="{{ form.file.id }}">{{ form.file.label }}</label>
+        <br>
+        {{ form.file() }}
+        {% for error in form.file.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+        {% if zip_hash %}
+        <ul>
+            <li>Currently saved: <samp>{{ zip_hash }}</samp></li>
+        </ul>
+        {% endif %}
+    </p>
+
+    <p>
+        <label for="{{ form.comments.id }}">{{ form.comments.label }}</label>
+        <br>
+        {{ form.comments() }}
+        {% for error in form.comments.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <p>{{ form.submit() }}</p>
+</form>
+{% endblock %}

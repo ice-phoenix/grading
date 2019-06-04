@@ -12,7 +12,9 @@ TEAM_NAME_FILE = "team_name.txt"
 TEAM_ID_FILE = "team_id.txt"
 SIZES_FILE = "sizes.csv"
 
-
+PROFILE_FILE = "profile.json"
+PROFILE_ZIP = "code.zip"
+PROFILE_HASH = HASH_FILE
 
 BLOCK_SUBSIDY = 1000 * 1000
 BLOCK_PUZZLE_SEL = 10   # consider this many top-scoring proposals
@@ -43,6 +45,9 @@ def grades_sub_dir(t_priv, ts):
 
 def block_sub_dir(t_id, block_num):
     return os.path.join(app.config['BLOCKS_DIR'], f'{block_num}', BLOCK_SUBMISSIONS_DIR, f'{t_id}')
+
+def profile_dir(t_id):
+    return os.path.join(app.config['PROFILES_DIR'], f'{t_id}/')
 
 @app.shell_context_processor
 def make_shell_context():

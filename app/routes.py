@@ -1,15 +1,17 @@
 from app import app
 from flask import render_template, flash, request, redirect, url_for, abort, jsonify
-from app.forms import RegisterForm, SubmitForm, LambdaSubmitForm
+from app.forms import RegisterForm, SubmitForm, LambdaSubmitForm, PrivForm, ProfileForm
 from app import db
 from app.models import Team, Submission, Block, BlockSubmission
 from app.grade import grade
-from app.contest import team_dir, sub_dir, grades_dir, block_sub_dir,\
+from app.contest import team_dir, sub_dir, grades_dir, block_sub_dir, profile_dir,\
     ZIP_TIME_FORMAT, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
+    PROFILE_FILE, PROFILE_ZIP, PROFILE_HASH,\
     BLOCK_WAIT_FOR_SECS, BLOCK_WAIT_FOR_SUBS, BLOCK_SOL_FILE, BLOCK_NEXT_PUZZLE_FILE
 import os
 from datetime import datetime
 import hashlib
+import json
 import random, string
 from sqlalchemy import and_
 from multiprocessing import Lock
@@ -50,6 +52,102 @@ def register():
 @app.route('/registered')
 def registered():
     return render_template('registered.html', title='Successfuly registered!')
+
+@app.route('/profile/', methods=['GET', 'POST'])
+def login():
+    form = PrivForm()
+    if form.validate_on_submit():
+        return redirect(url_for('profile', priv_id=form.private_id.data))
+    return render_template('priv.html', title='Enter your private ID', form=form)
+
+def save_profile(t_id, form, zip_hash):
+    dir = profile_dir(t_id)
+    os.makedirs(dir, exist_ok=True)
+
+    pp = os.path.join(dir, PROFILE_FILE)
+    fields = {
+        'id': t_id,
+        'name': form.team_name.data,
+        'email': form.email.data,
+        'members': form.members.data,
+        'countries': form.countries.data,
+        'langs': form.langs.data,
+        'comments': form.comments.data,
+        'zip_hash': zip_hash
+    }
+
+    if form.file.data is not None:
+        # Save ZIP
+        zp = os.path.join(dir, PROFILE_ZIP)
+        form.file.data.save(zp)
+
+        # Compute hash
+        h = ''
+        with open(zp,"rb") as f:
+            bytes = f.read()
+            h = hashlib.sha256(bytes).hexdigest()
+
+        fields['zip_hash'] = h
+
+    with open(pp, 'w') as f:
+        json.dump(fields, f)
+
+def read_profile(t_id):
+    pp = os.path.join(profile_dir(t_id), PROFILE_FILE)
+    fields = {}
+    if os.path.exists(pp):
+        with open(pp, 'r') as f:
+            fields = json.load(f)
+    return fields
+
+@app.route('/profile/<priv_id>', methods=['GET', 'POST'])
+def profile(priv_id):
+    t = Team.query.filter(Team.private_id==priv_id).first()
+    if t is None:
+        return redirect(url_for('login'))
+
+    saved = read_profile(t.id)
+    # Fill in pre-existing details
+    zip_hash = saved.get('zip_hash')
+    t_m = saved.get('members', '')
+    t_co = saved.get('countries', '')
+    t_l = saved.get('langs', '')
+    t_cc = saved.get('comments', '')
+
+    form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc)
+
+    if form.validate_on_submit():
+        n_name = form.team_name.data
+        n_email = form.email.data
+
+        # Is this a name change?
+        if t.name != n_name:
+            # Ensure the new name is not already taken
+            q = db.session.query(Team).filter(Team.name == n_name)
+            ex = db.session.query(q.exists()).scalar()
+            if ex:
+                flash('Chosen team name {} is already taken! Please choose another.'.format(n_name))
+                return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
+
+        # Is this an email change?
+        if t.email != n_email:
+            # Ensure the new name is not already taken
+            q = db.session.query(Team).filter(Team.email == n_email)
+            ex = db.session.query(q.exists()).scalar()
+            if ex:
+                flash('Email {} is already taken! Please choose another.'.format(n_email))
+                return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
+
+        # Update name and email in database
+        t.name = n_name
+        t.email = n_email
+        db.session.commit()
+
+        # Save profile and ZIP on disk
+        save_profile(t.id, form, zip_hash)
+        return redirect(url_for('profile', priv_id=priv_id))
+
+    return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
