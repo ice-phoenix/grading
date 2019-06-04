@@ -74,7 +74,7 @@ def compute_score(row, max, multiplier):
     total = 0
     for prob, score in row.iteritems():
         if max[prob] > 0:
-            total += round((score / max[prob]) * 1000 * multiplier[prob], NUM_DIGITS)
+            total += math.ceil((score / max[prob]) * 1000 * multiplier[prob])
     return total
 
 def get_ranking(num_problems, raw_ranking, multiplier):
