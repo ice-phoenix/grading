@@ -41,6 +41,7 @@ def select_next_puzzle(scores, block_num):
     scores = scores[scores[2] == 'GOOD'].head(contest.BLOCK_PUZZLE_SEL)
 
     pp = None
+    winner = []
     # If there are no good entries, choose a predefined one
     if len(scores) == 0:
         name = "prob-{:03d}.desc".format(block_num)
@@ -55,9 +56,10 @@ def select_next_puzzle(scores, block_num):
         
         subs = os.path.join(app.config['BLOCKS_DIR'], str(block_num), contest.BLOCK_SUBMISSIONS_DIR)
         pp = os.path.join(subs, str(next_puzzle_team), contest.BLOCK_NEXT_PUZZLE_FILE)
+        winner = [str(next_puzzle_team)]
 
     print("[Block {}] Puzzle: {}".format(block_num + 1, pp))
-    return pp
+    return pp, winner
 
 def allocate_coins(balance_file, scores):
     balance = {}
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     scores = process_scores(scr)
 
     # Select puzzle
-    next_puzzle = select_next_puzzle(scores, block_num)
+    next_puzzle, winner = select_next_puzzle(scores, block_num)
 
     # Compute balances
     next_balances = allocate_coins(balance_file, scores)
@@ -152,6 +154,10 @@ if __name__ == '__main__':
         cond = lines[next_b - 1]
         with open(ncp, 'w') as w:
             w.write(cond)
+
+    exp = os.path.join(next_block_path, contest.BLOCK_WINNER_FILE)
+    with open(exp, 'w') as f:
+        json.dump({"excluded": winner}, f)
 
     nsdp = os.path.join(next_block_path, contest.BLOCK_SUBMISSIONS_DIR)
     os.makedirs(nsdp, exist_ok=True)

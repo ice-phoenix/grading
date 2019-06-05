@@ -31,6 +31,7 @@ BLOCK_PROBLEM_MAT = "puzzle.mat"
 BLOCK_SOL_FILE = "puzzle.sol"
 BLOCK_NEXT_PUZZLE_FILE = "next-puzzle.desc"
 BLOCK_BALANCES_FILE = "balances.json"
+BLOCK_WINNER_FILE = "excluded.json"
 BLOCK_CONDITIONS_FILE = "next-puzzle.cond"
 BLOCK_SUBMISSIONS_DIR = "submissions"
 BLOCK_PREDEF_PUZZLE_DIR = "predef"
@@ -47,8 +48,11 @@ def sub_dir(t_id, ts):
 def grades_sub_dir(t_priv, ts):
     return os.path.join(grades_dir(t_priv), f'{ts}/')
 
+def block_dir(block_num):
+    return os.path.join(app.config['BLOCKS_DIR'], f'{block_num}')
+
 def block_sub_dir(t_id, block_num):
-    return os.path.join(app.config['BLOCKS_DIR'], f'{block_num}', BLOCK_SUBMISSIONS_DIR, f'{t_id}')
+    return os.path.join(block_dir(block_num), BLOCK_SUBMISSIONS_DIR, f'{t_id}')
 
 def profile_dir(t_id):
     return os.path.join(app.config['PROFILES_DIR'], f'{t_id}/')

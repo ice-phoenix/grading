@@ -4,16 +4,16 @@ from app.forms import RegisterForm, SubmitForm, LambdaSubmitForm, PrivForm, Prof
 from app import db
 from app.models import Team, Submission, Block, BlockSubmission
 from app.grade import grade
-from app.contest import team_dir, sub_dir, grades_dir, block_sub_dir, profile_dir,\
+from app.contest import team_dir, sub_dir, grades_dir, block_dir, block_sub_dir, profile_dir,\
     ZIP_TIME_FORMAT, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
     PROFILE_FILE, PROFILE_ZIP, PROFILE_HASH,\
-    BLOCK_WAIT_FOR_SECS, BLOCK_WAIT_FOR_SUBS, BLOCK_SOL_FILE, BLOCK_NEXT_PUZZLE_FILE
+    BLOCK_SOL_FILE, BLOCK_WINNER_FILE, BLOCK_NEXT_PUZZLE_FILE, BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE
+from app.blockchain import *
 import os
 from datetime import datetime
 import hashlib
 import json
 import random, string
-from sqlalchemy import and_
 from multiprocessing import Lock
 import subprocess
 
@@ -185,7 +185,7 @@ def submit():
             h = hashlib.sha256(bytes).hexdigest()
 
         # Schedule for grading
-        num_coins = 0
+        num_coins = get_balance(t_id)
         # TODO: this will just timeout if the broker is offline
         grade.delay(t_id, t_priv, t_name, now_str, filename, h, num_coins)
 
@@ -220,58 +220,6 @@ def submit():
 # BLOCKCHAIN
 
 blockchain_lock = Lock()
-
-def block_complete(block):
-    now = datetime.utcnow()
-    diff = (now - block.created).total_seconds()
-    num_subs = BlockSubmission.query.filter(BlockSubmission.block_num == block.id).count()
-
-    return (diff >= BLOCK_WAIT_FOR_SECS) and (num_subs >= BLOCK_WAIT_FOR_SUBS)
-
-def decide_accept_sub(t_id, form):
-    block = Block.query.order_by(Block.id.desc()).first()
-    errors = {}
-
-    # Submission is for current block
-    if form.block_num.data != block.id:
-        errors['block_num'] = "Invalid block_num {}: current block is {}.".format(form.block_num.data, block.id)
-
-    # Block still accepting submissions
-    complete = block_complete(block)
-    if complete:
-        errors['block_complete'] = "Block {} is complete: no more submissions accepted.".format(block.id)
-
-    # Team hasn't submitted before for this block
-    is_resubmit = BlockSubmission.query.filter(
-                    and_(BlockSubmission.block_num == block.id, BlockSubmission.team_id == t_id)
-                ).count() > 0
-    if is_resubmit:
-        errors['is_resubmit'] = "You (team {}) have already sent a submission for block {}.".format(t_id, block.id)
-
-    return len(errors) == 0, block, errors
-
-def lambda_init_if_needed():
-    # Creates the database record for the first block if it doesn't exist
-    block = Block.query.order_by(Block.id.desc()).first()
-    if block is None:
-        block = Block()
-        db.session.add(block)
-        db.session.commit()
-
-    return block
-
-def process_block():
-    block = Block.query.order_by(Block.id.desc()).first()
-
-    # If block is now full and processing script not run already
-    # (order reversed to short-circuit as early as possible)
-    if not block.scheduled_proc and block_complete(block):
-        pb = app.config['BLOCKS_PROC']
-        process = subprocess.Popen([pb, '-b', str(block.id)])
-        # Very important: DO _NOT_ wait for process to finish!
-        # We don't want to block the request handler.
-        block.scheduled_proc = True
-        db.session.commit()
 
 @app.route('/lambda/submit', methods=['POST'])
 def lambda_submit():
@@ -323,6 +271,53 @@ def lambda_submit():
         }
 
         return jsonify({'errors': errors}), 400
+
+@app.route('/lambda/getblockchaininfo')
+def getblockchaininfo():
+    block = get_current_block()
+    ts = block.created.timestamp()
+    subs = BlockSubmission.query.filter(BlockSubmission.block_num==block.id).count()
+    total = db.session.query(BlockSubmission).count()
+
+    info = {
+        'chain': 'lambda',
+        'block': block.id,
+        'block_ts': ts,
+        'block_subs': subs,
+        'total_subs': total,
+    }
+    return jsonify(info)
+
+@app.route('/lambda/getbalance/<t_id>')
+def getbalance(t_id):
+    return jsonify(get_balance(t_id))
+
+@app.route('/lambda/getbalances')
+def getbalances():
+    return jsonify(get_balances())
+
+@app.route('/lambda/getmininginfo')
+def getmininginfo():
+    block = get_current_block()
+    excluded = get_excluded(block.id)
+    puzzle = None
+    conditions = None
+
+    bd = block_dir(block.id)
+    pp = os.path.join(bd, BLOCK_PROBLEM_DESC)
+    cp = os.path.join(bd, BLOCK_CONDITIONS_FILE)
+    with open(pp, 'r') as f:
+        puzzle = f.read().rstrip()
+    with open(cp, 'r') as f:
+        conditions = f.read().rstrip()
+
+    info = {
+        'block': block.id,
+        'excluded': excluded,
+        'puzzle': puzzle,
+        'conditions': conditions
+    }
+    return jsonify(info)
 
 # This needs to be called externally!
 @app.route('/notify/block_timer')
