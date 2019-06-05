@@ -16,9 +16,12 @@ PROFILE_FILE = "profile.json"
 PROFILE_ZIP = "code.zip"
 PROFILE_HASH = HASH_FILE
 
-BLOCK_SUBSIDY = 1000 * 1000
-BLOCK_PUZZLE_SEL = 10   # consider this many top-scoring proposals
+BLOCK_SUBSIDY = 100 * 1000
 
+BLOCK_REWARD_SEL = 25                 # award coins to this many 
+BLOCK_PUZZLE_SEL = BLOCK_REWARD_SEL   # consider this many top-scoring proposals for next puzzle
+
+# TODO: change for deployment
 BLOCK_WAIT_FOR_SUBS = 1
 BLOCK_WAIT_FOR_SECS = 60
 
@@ -30,6 +33,7 @@ BLOCK_NEXT_PUZZLE_FILE = "next-puzzle.desc"
 BLOCK_BALANCES_FILE = "balances.json"
 BLOCK_CONDITIONS_FILE = "next-puzzle.cond"
 BLOCK_SUBMISSIONS_DIR = "submissions"
+BLOCK_PREDEF_PUZZLE_DIR = "predef"
 
 def team_dir(t_id):
     return os.path.join(app.config['TEAM_DIR'], f'{t_id}/')

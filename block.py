@@ -6,6 +6,7 @@ import os, shutil
 import json
 import pandas as pd
 import random
+import math
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -20,30 +21,70 @@ NOTIFY_URL = "http://localhost:5000/notify/block_created"
 def process_scores(score_file):
     sc = pd.read_csv(score_file, header=None)
     # 0 -> id, 1 -> score, 2 -> puzzle proposal GOOD/BAD
-    max_score = sc[1].max()
 
-    # Normalise and sort scores
-    sc[1] = sc[1].apply(lambda s: s/max_score)
-    sc.sort_values([1, 2], ascending=False, inplace=True)
+    # Have something do to only if there is a submission
+    if len(sc) > 0:
+        max_score = sc[1].max()
+
+        # Prevent divide by zero
+        if max_score == 0:
+            max_score = 1
+
+        # Normalise and sort scores
+        sc[1] = sc[1].apply(lambda s: s/max_score)
+        sc.sort_values([1, 2], ascending=False, inplace=True)
 
     return sc
 
-def select_next_puzzle(scores):
+def select_next_puzzle(scores, block_num):
     # Remove all BAD entries and limit to N entries
     scores = scores[scores[2] == 'GOOD'].head(contest.BLOCK_PUZZLE_SEL)
-    # Return a random entry: there's a bug in DataFrame.sample! (so we roll our own)
-    r = 0
-    if len(scores) > 1:
-        r = random.randrange(0, len(scores))
-    return scores.iat[r, 0]
+
+    pp = None
+    # If there are no good entries, choose a predefined one
+    if len(scores) == 0:
+        name = "prob-{:03d}.desc".format(block_num)
+        pp = os.path.join(app.config['BLOCKS_DIR'], contest.BLOCK_PREDEF_PUZZLE_DIR, name)
+
+    else:
+        # Return a random entry: there's a bug in DataFrame.sample! (so we roll our own)
+        r = 0
+        if len(scores) > 1:
+            r = random.randrange(0, len(scores))
+        next_puzzle_team = scores.iat[r, 0]
+        
+        subs = os.path.join(app.config['BLOCKS_DIR'], str(block_num), contest.BLOCK_SUBMISSIONS_DIR)
+        pp = os.path.join(subs, str(next_puzzle_team), contest.BLOCK_NEXT_PUZZLE_FILE)
+
+    print("[Block {}] Puzzle: {}".format(block_num + 1, pp))
+    return pp
 
 def allocate_coins(balance_file, scores):
     balance = {}
     with open(balance_file, 'r') as f:
         balance = json.load(f)
 
-    new_balance = {}
+    new_balance = balance
+
+    # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
+    n_scores = list(scores[1].unique())
+
+    # smallest rewarded score
+    srs = 0
+    if len(n_scores) != 0:
+        srs = n_scores[-1]
+    if len(n_scores) >= contest.BLOCK_REWARD_SEL:
+        srs = n_scores[contest.BLOCK_REWARD_SEL - 1]
+
+    # filter to qualifying submissions
+    scores = scores[(scores[1] >= srs)]
+    print("Qualifying:\n", scores)
+    
     total_shares = scores[1].sum()
+
+    # Prevent divide by zero
+    if math.isclose(total_shares, 0.0):
+        total_shares = 1.0
 
     for row_id in range(len(scores)):
         row = scores.loc[row_id]
@@ -64,6 +105,8 @@ if __name__ == '__main__':
     if not os.path.exists(block_path):
         parser.error("The given block does not exist in BLOCKS_DIR.")
 
+    block_num = int(args.b)
+
     # Generate puzzle.mat
     chk = app.config['CHECKER_PATH']
     puzzle_path = os.path.join(block_path, contest.BLOCK_PROBLEM_DESC)
@@ -82,12 +125,11 @@ if __name__ == '__main__':
     balance_file = os.path.join(block_path, contest.BLOCK_BALANCES_FILE)
 
     ## Next block
-    next_b = int(args.b) + 1
+    next_b = block_num + 1
     scores = process_scores(scr)
 
     # Select puzzle
-    next_puzzle_team = select_next_puzzle(scores)
-    next_puzzle = os.path.join(subs, str(next_puzzle_team), contest.BLOCK_NEXT_PUZZLE_FILE)
+    next_puzzle = select_next_puzzle(scores, block_num)
 
     # Compute balances
     next_balances = allocate_coins(balance_file, scores)
