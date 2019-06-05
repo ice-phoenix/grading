@@ -103,6 +103,12 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
             info = "Task ID: {}\nQueue waiting time: {}\nChecker time: {}\nTotal waiting time: {}\n".format(self.request.id, queue_time, checker_time, total_time)
             f.write(info)
 
+    # Remove *.sol, *.buy
+    files = os.listdir(sd)
+    for fn in files:
+        if fn.endswith(".sol") or fn.endswith(".buy"):
+            os.remove(os.path.join(sd, fn))
+
     # Copy score from submission directory to grades directory
     # TODO: sanitize
     src_fn = rf
