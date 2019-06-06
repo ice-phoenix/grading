@@ -20,6 +20,7 @@ You also **need to** compile [the checker](https://github.com/icfpcontest2019/ic
 flask run
 docker run -d -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 celery -A app.celery worker --loglevel=info -E -O fair
+watch -n5 curl http://localhost:5000/notify/block_timer
 celery flower -A app.celery --address=127.0.0.1 --port=5555 --basic_auth=admin:password --persistent --natural_time=false
 ```
 
