@@ -169,7 +169,8 @@ def submit():
         if app.config['SUBMIT_DELAY']:
             diff = (now - prev_time).total_seconds()
             if diff < app.config['SUBMIT_DELAY']:
-                return render_template('rate-limit.html', time_diff=diff, sub_delay=app.config['SUBMIT_DELAY'])
+                # Status code: 429 Too Many Requests
+                return render_template('rate-limit.html', time_diff=diff, sub_delay=app.config['SUBMIT_DELAY']), 429
 
         f = form.file.data
         now_str = now.strftime(ZIP_TIME_FORMAT)
@@ -184,8 +185,14 @@ def submit():
             bytes = f.read()
             h = hashlib.sha256(bytes).hexdigest()
 
-        # Schedule for grading
+        # Reject submissions that try to buy more boosters than they can afford
         num_coins = get_balance(t_id)
+        good_purchase, total = validate_booster_purchase(num_coins, location)
+        if not good_purchase:
+            # Status code: 402 Payment Required
+            return render_template('boosters-fail.html', num_coins=num_coins, total=total), 402
+
+        # Schedule for grading
         # TODO: this will just timeout if the broker is offline
         grade.delay(t_id, t_priv, t_name, now_str, filename, h, num_coins)
 

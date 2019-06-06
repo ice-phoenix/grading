@@ -12,6 +12,15 @@ TEAM_NAME_FILE = "team_name.txt"
 TEAM_ID_FILE = "team_id.txt"
 SIZES_FILE = "sizes.csv"
 
+BUY_EXT = ".buy"
+BOOSTER_PRICES = {
+    'B': 1000,  # batteries/brush
+    'F': 300,   # fast wheels/coffee
+    'L': 700,   # drill
+    'R': 1200,  # teleport
+    'C': 2000   # clone/call friend
+}
+
 PROFILE_FILE = "profile.json"
 PROFILE_ZIP = "code.zip"
 PROFILE_HASH = HASH_FILE

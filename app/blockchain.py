@@ -2,12 +2,17 @@ from app import app, db
 from app.models import Block, BlockSubmission
 from app.contest import block_dir, block_sub_dir,\
     BLOCK_WAIT_FOR_SECS, BLOCK_WAIT_FOR_SUBS, BLOCK_SOL_FILE,\
-    BLOCK_NEXT_PUZZLE_FILE, BLOCK_WINNER_FILE, BLOCK_BALANCES_FILE
+    BLOCK_NEXT_PUZZLE_FILE, BLOCK_WINNER_FILE, BLOCK_BALANCES_FILE,\
+    BOOSTER_PRICES, BUY_EXT
 import os
 import subprocess
 import json
 from datetime import datetime
 from sqlalchemy import and_
+from zipfile import ZipFile
+import tempfile
+import shutil
+import collections
 
 def block_complete(block):
     now = datetime.utcnow()
@@ -92,3 +97,28 @@ def get_excluded(block_num=None):
         with open(exp, 'r') as f:
             ex = json.load(f)
     return ex['excluded']
+
+def validate_booster_purchase(num_coins, filename):
+    total = 0
+
+    # This is nice since it removes the directory & files automatically
+    with tempfile.TemporaryDirectory() as tmp:
+        with ZipFile(filename) as zip:
+            buy = list(filter(lambda fn: fn.endswith(BUY_EXT), zip.namelist()))
+            zip.extractall(tmp, buy)
+
+            cfn = os.path.join(tmp, "concat.txt")
+            buy = list(map(lambda fn: os.path.join(tmp, fn), buy))
+
+            # Concatenate all the buy files in one
+            with open(cfn,'wb') as wfd:
+                for fn in buy:
+                    with open(fn,'rb') as fd:
+                        shutil.copyfileobj(fd, wfd)
+
+            with open(cfn, 'r') as f:
+                count = collections.Counter(f.read())
+                for booster in BOOSTER_PRICES.keys():
+                    total += count.get(booster, 0) * BOOSTER_PRICES[booster]
+
+    return total <= num_coins, total

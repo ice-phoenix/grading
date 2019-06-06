@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>You can't afford the boosters you tried to buy!</h1>
+<ul>
+    <li>Your submission has been rejected.</li>
+    <li>You have {{ num_coins }} LAM, but tried to purchase boosters worth {{ total }} LAM.</li>
+    <li>Earn more LAM or buy fewer boosters, and then resubmit!</li>
+</ul>
+{% endblock %}
