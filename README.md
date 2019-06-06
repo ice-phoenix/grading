@@ -42,3 +42,12 @@ Assumes `problems/` contains `sizes.csv`:
 ```
 ./block -b <num>
 ```
+
+The blockchain server-side logic is "event-driven", but for simplicity reasons
+there are no timed events. Rather, the server expects periodic `GET` requests at
+the `/notify/block_timer` endpoint to trigger timed events (e.g. new block
+creation). For example:
+
+```
+watch -n5 curl http://localhost:5000/notify/block_timer
+```
