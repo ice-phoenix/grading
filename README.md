@@ -35,7 +35,7 @@ curl -F 'private_id=cb70e4f1259f3d43' -F 'file=@good.zip' localhost:5000/submit
 Assumes `problems/` contains `sizes.csv`:
 
 ```
-./rankings.py -p persistent/problems/ -g persistent/grades/ --csv-output ranking.csv --html-output ranking.html
+./rankings.py -p persistent/problems/ -g persistent/grades/ --output-folder persistent/rankings/
 ```
 
 # Block checker

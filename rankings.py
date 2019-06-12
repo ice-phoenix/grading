@@ -70,26 +70,27 @@ def get_raw_ranking(grade_dir, time):
 
     return num_problems, ranking
 
-def compute_score(row, max, multiplier):
+def compute_score(row, best, multiplier):
     total = 0
     for prob, score in row.iteritems():
-        if max[prob] > 0:
-            total += math.ceil((score / max[prob]) * 1000 * multiplier[prob])
+        if score > 0:
+            total += math.ceil((best[prob] / score) * 1000 * multiplier[prob])
     return total
 
 def get_ranking(num_problems, raw_ranking, multiplier):
-    max = {}
+    best = {}
     ranking = raw_ranking.copy()
 
     probs = list(range(1, num_problems + 1))
     for p in probs:
-        max[p] = raw_ranking[p].max()
+        nonzero = raw_ranking[raw_ranking[p] > 0][p]
+        best[p] = nonzero.min()
         ranking.drop(columns=p, inplace=True)
 
     scores = []
     raw_ranking = raw_ranking[probs]
     for row_id in range(len(ranking)):
-        scores.append(compute_score(raw_ranking.loc[row_id], max, multiplier))
+        scores.append(compute_score(raw_ranking.loc[row_id], best, multiplier))
 
     scores = pd.DataFrame(scores)
     scores.columns = ['score']

@@ -22,16 +22,11 @@ def process_scores(score_file):
     sc = pd.read_csv(score_file, header=None)
     # 0 -> id, 1 -> score, 2 -> puzzle proposal GOOD/BAD
 
-    # Have something do to only if there is a submission
+    # Have something to do only if there is a submission
     if len(sc) > 0:
-        max_score = sc[1].max()
-
-        # Prevent divide by zero
-        if max_score == 0:
-            max_score = 1
-
+        best_score = sc[1].min()
         # Normalise and sort scores
-        sc[1] = sc[1].apply(lambda s: s/max_score)
+        sc[1] = sc[1].apply(lambda s: 0 if s == 0 else best_score / s)
         sc.sort_values([1, 2], ascending=False, inplace=True)
 
     return sc
@@ -61,7 +56,7 @@ def select_next_puzzle(scores, block_num):
     print("[Block {}] Puzzle: {}".format(block_num + 1, pp))
     return pp, winner
 
-def allocate_coins(balance_file, scores):
+def allocate_coins(balance_file, scores, winner):
     balance = {}
     with open(balance_file, 'r') as f:
         balance = json.load(f)
@@ -71,7 +66,7 @@ def allocate_coins(balance_file, scores):
     # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
     n_scores = list(scores[1].unique())
 
-    # smallest rewarded score
+    # smallest rewarded share
     srs = 0
     if len(n_scores) != 0:
         srs = n_scores[-1]
@@ -93,6 +88,8 @@ def allocate_coins(balance_file, scores):
         # Important: team must be str, not int
         team, share = str(row[0]), row[1]/total_shares
         new_balance[team] = balance.get(team, 0) + int(share * contest.BLOCK_SUBSIDY)
+        if team in winner:
+            new_balance[team] += contest.WINNER_SUBSIDY
 
     return new_balance
 
@@ -132,9 +129,8 @@ if __name__ == '__main__':
 
     # Select puzzle
     next_puzzle, winner = select_next_puzzle(scores, block_num)
-
     # Compute balances
-    next_balances = allocate_coins(balance_file, scores)
+    next_balances = allocate_coins(balance_file, scores, winner)
 
     # Write next block
     next_block_path = os.path.join(app.config['BLOCKS_DIR'], str(next_b))
