@@ -39,7 +39,7 @@ def register():
             t_id = Team.query.filter(Team.name==t_name).first().id
 
             flash('Team {} with email {} is now registered.'.format(form.team_name.data, form.email.data))
-            flash('You are team number {}.'.format(t_id))
+            flash('You are team number {} (write this down!).'.format(t_id))
             flash('Your private ID (write this down!) is {}.'.format(t_priv))
             return redirect(url_for('registered'))
         except:
@@ -127,7 +127,7 @@ def profile(priv_id):
             ex = db.session.query(q.exists()).scalar()
             if ex:
                 flash('Chosen team name {} is already taken! Please choose another.'.format(n_name))
-                return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
+                return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
         # Is this an email change?
         if t.email != n_email:
@@ -136,7 +136,7 @@ def profile(priv_id):
             ex = db.session.query(q.exists()).scalar()
             if ex:
                 flash('Email {} is already taken! Please choose another.'.format(n_email))
-                return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
+                return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
         # Update name and email in database
         t.name = n_name
@@ -147,7 +147,7 @@ def profile(priv_id):
         save_profile(t.id, form, zip_hash)
         return redirect(url_for('profile', priv_id=priv_id))
 
-    return render_template('profile.html', title='Update your profile', form=form, zip_hash=zip_hash)
+    return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
@@ -324,12 +324,13 @@ def getblockinfo(block_num=None):
     try:
         block_num = int(block_num)
     except ValueError:
-        return jsonify({'not_int': 'block number "{}" is not an integer'.format(block_num)})
+        return jsonify({'errors': {'not_int': 'block number "{}" is not an integer'.format(block_num)}})
     except TypeError:
         if block_num is None:
             pass
-        # This should not happen
-        abort(400)
+        else:
+            # This should not happen
+            abort(400)
 
     block = cb = get_current_block()
     if block_num is not None:
