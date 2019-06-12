@@ -324,16 +324,20 @@ def getblockinfo(block_num=None):
     try:
         block_num = int(block_num)
     except ValueError:
-        abort(400)
+        return jsonify({'not_int': 'block number "{}" is not an integer'.format(block_num)})
     except TypeError:
         if block_num is None:
             pass
-        else:
-            abort(400)
+        # This should not happen
+        abort(400)
 
     block = cb = get_current_block()
     if block_num is not None:
         block = Block.query.filter(Block.id==block_num).first()
+
+    # Don't know anything about future blocks
+    if block is None:
+        return jsonify({})
 
     ts = block.created.timestamp()
     subs = BlockSubmission.query.filter(BlockSubmission.block_num==block.id).count()
