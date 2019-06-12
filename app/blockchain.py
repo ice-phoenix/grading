@@ -3,7 +3,7 @@ from app.models import Block, BlockSubmission
 from app.contest import block_dir, block_sub_dir,\
     BLOCK_WAIT_FOR_SECS, BLOCK_WAIT_FOR_SUBS, BLOCK_SOL_FILE,\
     BLOCK_NEXT_PUZZLE_FILE, BLOCK_WINNER_FILE, BLOCK_BALANCES_FILE,\
-    BOOSTER_PRICES, BUY_EXT
+    BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE, BOOSTER_PRICES, BUY_EXT
 import os
 import subprocess
 import json
@@ -97,6 +97,28 @@ def get_excluded(block_num=None):
         with open(exp, 'r') as f:
             ex = json.load(f)
     return ex['excluded']
+
+def get_problem(block_num=None):
+    if block_num is None:
+        block_num = get_current_block().id
+
+    bd = block_dir(block_num)
+    pp = os.path.join(bd, BLOCK_PROBLEM_DESC)
+    problem = None
+    with open(pp, 'r') as f:
+        problem = f.read().rstrip()
+    return problem
+
+def get_conditions(block_num=None):
+    if block_num is None:
+        block_num = get_current_block().id
+
+    bd = block_dir(block_num)
+    cp = os.path.join(bd, BLOCK_CONDITIONS_FILE)
+    conditions = None
+    with open(cp, 'r') as f:
+        conditions = f.read().rstrip()
+    return conditions
 
 def validate_booster_purchase(num_coins, filename):
     total = 0

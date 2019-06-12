@@ -287,7 +287,6 @@ def getblockchaininfo():
     total = db.session.query(BlockSubmission).count()
 
     info = {
-        'chain': 'lambda',
         'block': block.id,
         'block_ts': ts,
         'block_subs': subs,
@@ -307,24 +306,54 @@ def getbalances():
 def getmininginfo():
     block = get_current_block()
     excluded = get_excluded(block.id)
-    puzzle = None
-    conditions = None
-
-    bd = block_dir(block.id)
-    pp = os.path.join(bd, BLOCK_PROBLEM_DESC)
-    cp = os.path.join(bd, BLOCK_CONDITIONS_FILE)
-    with open(pp, 'r') as f:
-        puzzle = f.read().rstrip()
-    with open(cp, 'r') as f:
-        conditions = f.read().rstrip()
+    task = get_problem(block.id)
+    puzzle = get_conditions(block.id)
 
     info = {
         'block': block.id,
         'excluded': excluded,
-        'puzzle': puzzle,
-        'conditions': conditions
+        'task': task,
+        'puzzle': puzzle
     }
     return jsonify(info)
+
+@app.route('/lambda/getblockinfo')
+@app.route('/lambda/getblockinfo/<block_num>')
+def getblockinfo(block_num=None):
+    # After this, block_num is either None or int
+    try:
+        block_num = int(block_num)
+    except ValueError:
+        abort(400)
+    except TypeError:
+        if block_num is None:
+            pass
+        else:
+            abort(400)
+
+    block = cb = get_current_block()
+    if block_num is not None:
+        block = Block.query.filter(Block.id==block_num).first()
+
+    ts = block.created.timestamp()
+    subs = BlockSubmission.query.filter(BlockSubmission.block_num==block.id).count()
+    excluded = get_excluded(block.id)
+    task = get_problem(block.id)
+    puzzle = get_conditions(block.id)
+    balances = get_balances(block.id)
+
+    info = {
+        'block': block.id,
+        'block_ts': ts,
+        'balances': balances,
+        'block_subs': subs,
+        'excluded': excluded,
+        'task': task,
+        'puzzle': puzzle
+    }
+
+    return jsonify(info)
+
 
 # This needs to be called externally!
 @app.route('/notify/block_timer')
@@ -345,6 +374,7 @@ def block_created():
     with blockchain_lock:
         lambda_init_if_needed()
 
+        # TODO: consider the need for reprocessing
         block_num = data['block']
         block = Block()
         db.session.add(block)
