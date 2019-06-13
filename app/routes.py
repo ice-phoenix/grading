@@ -17,6 +17,7 @@ import random, string
 from multiprocessing import Lock
 import subprocess
 
+
 ORIG_TIME = '2000-01-01 00:00:00.000000'
 DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -41,17 +42,13 @@ def register():
             flash('Team {} with email {} is now registered.'.format(form.team_name.data, form.email.data))
             flash('You are team number {} (write this down!).'.format(t_id))
             flash('Your private ID (write this down!) is {}.'.format(t_priv))
-            return redirect(url_for('registered'))
+            return render_template('registered.html', title='Successfuly registered!')
         except:
             flash('There was a database error at time {}'.format(datetime.utcnow()))
             flash('Your registration did not go through! Please try again shortly.')
             flash('If this keeps happening, contact the contest organisers.')
 
     return render_template('register.html', title='Register your team', form=form)
-
-@app.route('/registered')
-def registered():
-    return render_template('registered.html', title='Successfuly registered!')
 
 @app.route('/profile/', methods=['GET', 'POST'])
 def login():
