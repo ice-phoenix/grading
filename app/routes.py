@@ -25,7 +25,7 @@ DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    form = RegisterForm()
+    form = RegisterForm(meta={'csrf': False})
     # This also checks that the team name is not already taken
     if form.validate_on_submit():
         t_name = form.team_name.data
@@ -52,7 +52,7 @@ def register():
 
 @app.route('/profile/', methods=['GET', 'POST'])
 def login():
-    form = PrivForm()
+    form = PrivForm(meta={'csrf': False})
     if form.validate_on_submit():
         return redirect(url_for('profile', priv_id=form.private_id.data))
     return render_template('priv.html', title='Enter your private ID', form=form)
@@ -111,7 +111,7 @@ def profile(priv_id):
     t_l = saved.get('langs', '')
     t_cc = saved.get('comments', '')
 
-    form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc)
+    form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc, meta={'csrf': False})
 
     if form.validate_on_submit():
         n_name = form.team_name.data
