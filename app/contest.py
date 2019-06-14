@@ -29,11 +29,14 @@ BLOCK_SUBSIDY = 100 * 1000
 WINNER_SUBSIDY = 2000
 
 BLOCK_REWARD_SEL = 25                 # award coins to this many 
-BLOCK_PUZZLE_SEL = BLOCK_REWARD_SEL   # consider this many top-scoring proposals for next puzzle
+BLOCK_LATE_REWARD_SEL = 9999          # large number / award to all submissions if late
+BLOCK_PUZZLE_SEL = 10                 # consider this many top-scoring proposals for next puzzle
 
-# TODO: change for deployment
-BLOCK_WAIT_FOR_SUBS = 5
-BLOCK_WAIT_FOR_SECS = 60
+BLOCK_WAIT_FOR_SUBS = 50
+BLOCK_WAIT_FOR_SECS = 15 * 60
+
+BLOCK_LATE_WAIT_FOR_SUBS = 1
+BLOCK_LATE_WAIT_FOR_SECS = 30 * 60
 
 BLOCK_CHAIN_DESC = "lambda.chain"
 BLOCK_PROBLEM_DESC = "puzzle.desc"

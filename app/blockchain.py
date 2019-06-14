@@ -2,6 +2,7 @@ from app import app, db
 from app.models import Block, BlockSubmission
 from app.contest import block_dir, block_sub_dir,\
     BLOCK_WAIT_FOR_SECS, BLOCK_WAIT_FOR_SUBS, BLOCK_SOL_FILE,\
+    BLOCK_LATE_WAIT_FOR_SECS, BLOCK_LATE_WAIT_FOR_SUBS,\
     BLOCK_NEXT_PUZZLE_FILE, BLOCK_WINNER_FILE, BLOCK_BALANCES_FILE,\
     BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE, BOOSTER_PRICES, BUY_EXT
 import os
@@ -19,7 +20,9 @@ def block_complete(block):
     diff = (now - block.created).total_seconds()
     num_subs = BlockSubmission.query.filter(BlockSubmission.block_num == block.id).count()
 
-    return (diff >= BLOCK_WAIT_FOR_SECS) and (num_subs >= BLOCK_WAIT_FOR_SUBS)
+    normal = (diff >= BLOCK_WAIT_FOR_SECS) and (num_subs >= BLOCK_WAIT_FOR_SUBS)
+    late = (diff >= BLOCK_LATE_WAIT_FOR_SECS) and (num_subs >= BLOCK_LATE_WAIT_FOR_SUBS)
+    return (normal or late), late
 
 def decide_accept_sub(t_id, form):
     block = Block.query.order_by(Block.id.desc()).first()
@@ -30,7 +33,7 @@ def decide_accept_sub(t_id, form):
         errors['block_num'] = "Invalid block_num {}: current block is {}.".format(form.block_num.data, block.id)
 
     # Block still accepting submissions
-    complete = block_complete(block)
+    complete, _ = block_complete(block)
     if complete:
         errors['block_complete'] = "Block {} is complete: no more submissions accepted.".format(block.id)
 
@@ -65,9 +68,13 @@ def process_block():
 
     # If block is now full and processing script not run already
     # (order reversed to short-circuit as early as possible)
-    if not block.scheduled_proc and block_complete(block):
+    complete, late = block_complete(block)
+    if not block.scheduled_proc and complete:
         pb = app.config['BLOCKS_PROC']
-        process = subprocess.Popen([pb, '-b', str(block.id)])
+        if late:
+            process = subprocess.Popen([pb, '-b', str(block.id), '--late'])
+        else:
+            process = subprocess.Popen([pb, '-b', str(block.id)])
         # Very important: DO _NOT_ wait for process to finish!
         # We don't want to block the request handler.
         block.scheduled_proc = True

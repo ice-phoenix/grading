@@ -56,7 +56,10 @@ def select_next_puzzle(scores, block_num):
     print("[Block {}] Puzzle: {}".format(block_num + 1, pp))
     return pp, winner
 
-def allocate_coins(balance_file, scores, winner):
+def allocate_coins(balance_file, scores, winner, late):
+    # Determine whether we're doing normal rewards or late-block rewards
+    num_sel = contest.BLOCK_LATE_REWARD_SEL if late else contest.BLOCK_REWARD_SEL
+
     balance = {}
     with open(balance_file, 'r') as f:
         balance = json.load(f)
@@ -70,8 +73,8 @@ def allocate_coins(balance_file, scores, winner):
     srs = 0
     if len(n_scores) != 0:
         srs = n_scores[-1]
-    if len(n_scores) >= contest.BLOCK_REWARD_SEL:
-        srs = n_scores[contest.BLOCK_REWARD_SEL - 1]
+    if len(n_scores) >= num_sel:
+        srs = n_scores[num_sel - 1]
 
     # filter to qualifying submissions
     scores = scores[(scores[1] >= srs)]
@@ -96,6 +99,7 @@ def allocate_coins(balance_file, scores, winner):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process block submissions.')
     parser.add_argument('-b', metavar='N', required=True, help='block number')
+    parser.add_argument('--late', action="store_true", help='is this a late block?')
     args = parser.parse_args()
 
     os.chdir(app.config['ROOT_DIR'])
@@ -130,7 +134,7 @@ if __name__ == '__main__':
     # Select puzzle
     next_puzzle, winner = select_next_puzzle(scores, block_num)
     # Compute balances
-    next_balances = allocate_coins(balance_file, scores, winner)
+    next_balances = allocate_coins(balance_file, scores, winner, args.late)
 
     # Write next block
     next_block_path = os.path.join(app.config['BLOCKS_DIR'], str(next_b))
