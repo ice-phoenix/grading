@@ -149,6 +149,7 @@ if __name__ == '__main__':
     <html>
     <head>
     <title>Live Rankings</title>
+    <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
     </head>
     <center>
     <h1>Live Rankings</h1>
