@@ -57,14 +57,14 @@ def login():
         return redirect(url_for('profile', priv_id=form.private_id.data))
     return render_template('priv.html', title='Enter your private ID', form=form)
 
-def save_profile(t_id, form, zip_hash):
+def save_profile(t_id, t_name, form, zip_hash):
     dir = profile_dir(t_id)
     os.makedirs(dir, exist_ok=True)
 
     pp = os.path.join(dir, PROFILE_FILE)
     fields = {
         'id': t_id,
-        'name': form.team_name.data,
+        'name': t_name,
         'email': form.email.data,
         'members': form.members.data,
         'countries': form.countries.data,
@@ -125,17 +125,17 @@ def profile(priv_id):
     form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc, meta={'csrf': False})
 
     if form.validate_on_submit():
-        n_name = form.team_name.data
+        # n_name = form.team_name.data
         n_email = form.email.data
 
-        # Is this a name change?
-        if t.name != n_name:
-            # Ensure the new name is not already taken
-            q = db.session.query(Team).filter(Team.name == n_name)
-            ex = db.session.query(q.exists()).scalar()
-            if ex:
-                flash('Chosen team name {} is already taken! Please choose another.'.format(n_name))
-                return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
+        # # Is this a name change?
+        # if t.name != n_name:
+        #     # Ensure the new name is not already taken
+        #     q = db.session.query(Team).filter(Team.name == n_name)
+        #     ex = db.session.query(q.exists()).scalar()
+        #     if ex:
+        #         flash('Chosen team name {} is already taken! Please choose another.'.format(n_name))
+        #         return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
         # Is this an email change?
         if t.email != n_email:
@@ -147,12 +147,13 @@ def profile(priv_id):
                 return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
         # Update name and email in database
-        t.name = n_name
+        # t.name = n_name
         t.email = n_email
         db.session.commit()
 
         # Save profile and ZIP on disk
-        save_profile(t.id, form, zip_hash)
+        save_profile(t.id, t.name, form, zip_hash)
+        flash('Successfully updated profile.')
         return redirect(url_for('profile', priv_id=priv_id))
 
     return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)

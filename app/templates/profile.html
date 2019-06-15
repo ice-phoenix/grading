@@ -1,10 +1,23 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<h2>Messages:</h2>
+<ul>
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
 <h1>Update your profile</h1>
 
 <p>Public ID: <samp>{{ t_id }}</samp></p>
 <p>Private ID: <samp>{{ t_priv }}</samp></p>
+<p>Last updated: <samp>{{ last_update }}</samp></p>
 
 <hr>
 
@@ -14,7 +27,7 @@
     <p>
         <label for="{{ form.team_name.id }}">{{ form.team_name.label }}</label>
         <br>
-        {{ form.team_name() }}
+        {{ form.team_name(disabled=true) }}
         {% for error in form.team_name.errors %}
         <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
