@@ -124,6 +124,9 @@ def profile(priv_id):
     t_cc = saved.get('comments', '')
     lu = saved.get('last_updated', 'never')
 
+    if lu != 'never':
+        lu += ' ({:.0f} seconds ago)'.format((datetime.utcnow() - datetime.strptime(lu, DB_TIME_FORMAT)).total_seconds())
+
     form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc, meta={'csrf': False})
     msgs = []
     if form.validate_on_submit():
