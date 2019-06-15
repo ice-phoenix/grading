@@ -25,7 +25,7 @@ class Config(object):
     PROFILES_DIR = os.path.join(PERSISTENT_DIR, 'profiles/')
 
     SUBMIT_DIR = os.path.join(PERSISTENT_DIR, 'zips/')
-    SUBMIT_DELAY = 10  # None or number of seconds
+    SUBMIT_DELAY = 10 * 60  # None or number of seconds
 
     CELERY_BROKER_URL = os.environ.get('BROKER_URL') or 'pyamqp://guest@localhost//'
     CELERY_RESULT_BACKEND = 'rpc://'
