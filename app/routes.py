@@ -73,10 +73,16 @@ def save_profile(t_id, form, zip_hash):
         'zip_hash': zip_hash
     }
 
+    now = datetime.utcnow().strftime(ZIP_TIME_FORMAT)
     if form.file.data is not None:
         # Save ZIP
         zp = os.path.join(dir, PROFILE_ZIP)
         form.file.data.save(zp)
+
+        # Save ZIP with datetime filename as well
+        form.file.data.stream.seek(0)
+        dp = os.path.join(dir, f'{now}.zip')
+        form.file.data.save(dp)
 
         # Compute hash
         h = ''
@@ -87,6 +93,11 @@ def save_profile(t_id, form, zip_hash):
         fields['zip_hash'] = h
 
     with open(pp, 'w') as f:
+        json.dump(fields, f)
+
+    # Save a profile with datetime filename as well
+    dpp = os.path.join(dir, f'{now}.json')
+    with open(dpp, 'w') as f:
         json.dump(fields, f)
 
 def read_profile(t_id):
