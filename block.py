@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 ./checker block -p <current_task.mat> -c <lambda.chain> -b <blockNum> -s <submissionFolder> -o <path-to-scores.csv> -v <true>
 """
 
-NOTIFY_URL = "http://localhost:5000/notify/block_created"
+NOTIFY_URL = "https://lambdacoin.org/notify/block_created"
 
 def process_scores(score_file):
     sc = pd.read_csv(score_file, header=None)

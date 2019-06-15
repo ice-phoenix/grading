@@ -32,7 +32,7 @@ BLOCK_REWARD_SEL = 25                 # award coins to this many
 BLOCK_LATE_REWARD_SEL = 9999          # large number / award to all submissions if late
 BLOCK_PUZZLE_SEL = 10                 # consider this many top-scoring proposals for next puzzle
 
-BLOCK_WAIT_FOR_SUBS = 50
+BLOCK_WAIT_FOR_SUBS = 25
 BLOCK_WAIT_FOR_SECS = 15 * 60
 
 BLOCK_LATE_WAIT_FOR_SUBS = 1
