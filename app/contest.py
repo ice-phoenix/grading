@@ -7,6 +7,7 @@ ZIP_TIME_MINUTE = '%Y-%m-%d-%H-%M'
 HASH_FILE = "hash.txt"
 SCORE_FILE = "score.csv"
 TIMING_FILE = "timing.txt"
+SPENT_LAM_FILE = "spent.txt"
 SUBMISSIONS_FILE = "submissions.txt"
 TEAM_NAME_FILE = "team_name.txt"
 TEAM_ID_FILE = "team_id.txt"

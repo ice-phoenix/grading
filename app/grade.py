@@ -1,6 +1,6 @@
 from app import app, celery
 from celery.utils.log import get_task_logger
-from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT, HASH_FILE, SCORE_FILE, TIMING_FILE
+from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT, HASH_FILE, SCORE_FILE, TIMING_FILE, SPENT_LAM_FILE
 import random
 import time
 import os, tempfile
@@ -42,7 +42,7 @@ def symlink_force(target, link_name):
 # acks_late=True means the task is ACKed after it finishes executing
 # if worker crashes, it is retried!
 @celery.task(bind=True, autoretry_for=(Exception,), acks_late=True, default_retry_delay=30)
-def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
+def grade(self, t_id, t_priv, t_name, ts, filename, hash, spent_coins):
     location = os.path.join(app.config['SUBMIT_DIR'], filename)
 
     logger.info(f'Processing {hash}')
@@ -88,20 +88,20 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
     checker_time = (checker_end_time - checker_start_time).total_seconds()
     total_time = queue_time + checker_time
 
-    # Put the hash in the grades directory
+    # Create grades directory
     gd = grades_sub_dir(t_priv, ts)
     os.makedirs(gd, exist_ok=True)
 
+    # Write hash
     hf = os.path.join(gd, HASH_FILE)
     with open(hf, 'w') as f:
         f.write(hash)
 
     # Write timing information
-    for dir in [sd, gd]:
-        tf = os.path.join(dir, TIMING_FILE)
-        with open(tf, 'w') as f:
-            info = "Task ID: {}\nQueue waiting time: {}\nChecker time: {}\nTotal waiting time: {}\n".format(self.request.id, queue_time, checker_time, total_time)
-            f.write(info)
+    tf = os.path.join(gd, TIMING_FILE)
+    with open(tf, 'w') as f:
+        info = "Task ID: {}\nQueue waiting time: {}\nChecker time: {}\nTotal waiting time: {}\n".format(self.request.id, queue_time, checker_time, total_time)
+        f.write(info)
 
     # Remove *.sol, *.buy
     files = os.listdir(sd)
@@ -109,11 +109,17 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, coins):
         if fn.endswith(".sol") or fn.endswith(".buy"):
             os.remove(os.path.join(sd, fn))
 
-    # Copy score from submission directory to grades directory
     # TODO: sanitize
+    # Copy score from submission directory to grades directory
     src_fn = rf
     dst_fn = os.path.join(gd, SCORE_FILE)
     shutil.copyfile(src_fn, dst_fn)
+
+    # TODO: sanitize
+    # Write SPENT_LAM_FILE
+    slf = os.path.join(gd, SPENT_LAM_FILE)
+    with open(slf, 'w') as f:
+        f.write(f'{spent_coins}')
 
     # Update latest
     link = os.path.join(td, 'latest-graded')
