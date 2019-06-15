@@ -29,12 +29,14 @@ def process_scores(score_file):
         # Normalise and sort scores
         sc[1] = sc[1].apply(lambda s: 0 if s == 0 else best_score / s)
         sc.sort_values([1, 2], ascending=False, inplace=True)
+        sc.reset_index(drop=True, inplace=True)
 
     return sc
 
 def select_next_puzzle(scores, block_num):
     # Remove all BAD entries and limit to N entries
     scores = scores[scores[2] == 'GOOD'].head(contest.BLOCK_PUZZLE_SEL)
+    scores.reset_index(drop=True, inplace=True)
 
     pp = None
     winner = []
@@ -67,6 +69,7 @@ def allocate_coins(balance_file, scores, winner, late):
 
     new_balance = balance
 
+    scores.reset_index(drop=True, inplace=True)
     # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
     n_scores = list(scores[1].unique())
 
@@ -81,6 +84,7 @@ def allocate_coins(balance_file, scores, winner, late):
 
     # filter to qualifying submissions
     scores = scores[(scores[1] >= srs)]
+    scores.reset_index(drop=True, inplace=True)
     print("Qualifying submissions:\n", scores)
     
     total_shares = scores[1].sum()
