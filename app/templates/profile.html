@@ -2,7 +2,6 @@
 
 {% block content %}
 
-{% with messages = get_flashed_messages() %}
 {% if messages %}
 <h2>Messages:</h2>
 <ul>
@@ -11,13 +10,12 @@
     {% endfor %}
 </ul>
 {% endif %}
-{% endwith %}
 
 <h1>Update your profile</h1>
 
 <p>Public ID: <samp>{{ t_id }}</samp></p>
 <p>Private ID: <samp>{{ t_priv }}</samp></p>
-<p>Last updated: <samp>{{ last_update }}</samp></p>
+<p>Last updated: <samp>{{ lu }}</samp></p>
 
 <hr>
 

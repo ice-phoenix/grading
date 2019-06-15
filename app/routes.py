@@ -70,7 +70,8 @@ def save_profile(t_id, t_name, form, zip_hash):
         'countries': form.countries.data,
         'langs': form.langs.data,
         'comments': form.comments.data,
-        'zip_hash': zip_hash
+        'zip_hash': zip_hash,
+        'last_updated':  datetime.utcnow().strftime(DB_TIME_FORMAT)
     }
 
     now = datetime.utcnow().strftime(ZIP_TIME_FORMAT)
@@ -121,21 +122,12 @@ def profile(priv_id):
     t_co = saved.get('countries', '')
     t_l = saved.get('langs', '')
     t_cc = saved.get('comments', '')
+    lu = saved.get('last_updated', 'never')
 
     form = ProfileForm(team_name=t.name, email=t.email, members=t_m, countries=t_co, langs=t_l, comments=t_cc, meta={'csrf': False})
-
+    msgs = []
     if form.validate_on_submit():
-        # n_name = form.team_name.data
         n_email = form.email.data
-
-        # # Is this a name change?
-        # if t.name != n_name:
-        #     # Ensure the new name is not already taken
-        #     q = db.session.query(Team).filter(Team.name == n_name)
-        #     ex = db.session.query(q.exists()).scalar()
-        #     if ex:
-        #         flash('Chosen team name {} is already taken! Please choose another.'.format(n_name))
-        #         return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
         # Is this an email change?
         if t.email != n_email:
@@ -143,20 +135,18 @@ def profile(priv_id):
             q = db.session.query(Team).filter(Team.email == n_email)
             ex = db.session.query(q.exists()).scalar()
             if ex:
-                flash('Email {} is already taken! Please choose another.'.format(n_email))
-                return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
+                msgs.append('Email {} is already taken! Please choose another.'.format(n_email))
+                return render_template('profile.html', title='Update your profile', messages=msgs, lu=lu, t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
-        # Update name and email in database
-        # t.name = n_name
+        # Update email in database
         t.email = n_email
         db.session.commit()
 
         # Save profile and ZIP on disk
         save_profile(t.id, t.name, form, zip_hash)
-        flash('Successfully updated profile.')
         return redirect(url_for('profile', priv_id=priv_id))
 
-    return render_template('profile.html', title='Update your profile', t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
+    return render_template('profile.html', title='Update your profile', messages=msgs, lu=lu, t_id=t.id, t_priv=priv_id, form=form, zip_hash=zip_hash)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
