@@ -35,7 +35,7 @@ BLOCK_PUZZLE_SEL = 10                 # consider this many top-scoring proposals
 BLOCK_WAIT_FOR_SUBS = 25
 BLOCK_WAIT_FOR_SECS = 15 * 60
 
-BLOCK_LATE_WAIT_FOR_SUBS = 1
+BLOCK_LATE_WAIT_FOR_SUBS = 0
 BLOCK_LATE_WAIT_FOR_SECS = 30 * 60
 
 BLOCK_CHAIN_DESC = "lambda.chain"

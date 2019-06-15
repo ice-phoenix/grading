@@ -5,6 +5,7 @@ import subprocess
 import os, shutil
 import json
 import pandas as pd
+import pandas.errors
 import random
 import math
 from urllib.parse import urlencode
@@ -19,7 +20,13 @@ from urllib.request import Request, urlopen
 NOTIFY_URL = app.config['NOTIFY_URL'] or "http://localhost:5000/notify/block_created"
 
 def process_scores(score_file):
-    sc = pd.read_csv(score_file, header=None)
+    sc = pd.DataFrame(columns=[0, 1, 2])
+    try:
+        sc = pd.read_csv(score_file, header=None)
+    except (FileNotFoundError, pandas.errors.EmptyDataError) as e:
+        print(f"{contest.SCORE_FILE} exception {e}; there are no submissions for this block.")
+        pass
+
     # 0 -> id, 1 -> score, 2 -> puzzle proposal GOOD/BAD
 
     # Have something to do only if there is a submission
@@ -126,6 +133,7 @@ if __name__ == '__main__':
     _ = process.wait()
 
     # Grade submissions
+    # XXX: this fails if there are no submissions; SCORE_FILE will not exist
     lmbd = os.path.join(app.config['BLOCKS_DIR'], contest.BLOCK_CHAIN_DESC)
     subs = os.path.join(block_path, contest.BLOCK_SUBMISSIONS_DIR)
     scr = os.path.join(block_path, contest.SCORE_FILE)
