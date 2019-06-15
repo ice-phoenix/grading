@@ -16,7 +16,7 @@ from urllib.request import Request, urlopen
 ./checker block -p <current_task.mat> -c <lambda.chain> -b <blockNum> -s <submissionFolder> -o <path-to-scores.csv> -v <true>
 """
 
-NOTIFY_URL = "https://lambdacoin.org/notify/block_created"
+NOTIFY_URL = app.config['NOTIFY_URL'] or "http://localhost:5000/notify/block_created"
 
 def process_scores(score_file):
     sc = pd.read_csv(score_file, header=None)
@@ -24,7 +24,8 @@ def process_scores(score_file):
 
     # Have something to do only if there is a submission
     if len(sc) > 0:
-        best_score = sc[1].min()
+        # minimum non-zero score
+        best_score = sc[1][sc[1] > 0].min()
         # Normalise and sort scores
         sc[1] = sc[1].apply(lambda s: 0 if s == 0 else best_score / s)
         sc.sort_values([1, 2], ascending=False, inplace=True)
@@ -69,6 +70,8 @@ def allocate_coins(balance_file, scores, winner, late):
     # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
     n_scores = list(scores[1].unique())
 
+    print("All submissions:\n", scores)
+
     # smallest rewarded share
     srs = 0
     if len(n_scores) != 0:
@@ -78,7 +81,7 @@ def allocate_coins(balance_file, scores, winner, late):
 
     # filter to qualifying submissions
     scores = scores[(scores[1] >= srs)]
-    print("Qualifying:\n", scores)
+    print("Qualifying submissions:\n", scores)
     
     total_shares = scores[1].sum()
 

@@ -7,6 +7,7 @@ class Config(object):
     DB_DIR = os.environ.get('DB_DIR') or ROOT_DIR
 
     SECRET_KEY = os.environ.get('SECRET_KEY') or '6cb49381bd6a6f239220e42'
+    NOTIFY_URL = os.environ.get('NOTIFY_URL') or "http://localhost:5000/notify/block_created"
     NOTIFY_SECRET_KEY = os.environ.get('NOTIFY_SECRET_KEY') or '1aab559c46c53fb6a6804ab7ae3e826b'
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
