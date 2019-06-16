@@ -82,7 +82,7 @@ def compute_unspent(row, balances):
     t_id = row['id']
     sp = os.path.join(row['path'], contest.SPENT_LAM_FILE)
 
-    total = balances[t_id]
+    total = balances.get(t_id, 0)
     spent = 0
     # Get value in spent.txt
     try:
