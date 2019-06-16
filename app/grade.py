@@ -109,13 +109,13 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, spent_coins):
         if fn.endswith(".sol") or fn.endswith(".buy"):
             os.remove(os.path.join(sd, fn))
 
-    # TODO: sanitize
+    # TODO: stages
     # Copy score from submission directory to grades directory
     src_fn = rf
     dst_fn = os.path.join(gd, SCORE_FILE)
     shutil.copyfile(src_fn, dst_fn)
 
-    # TODO: sanitize
+    # TODO: stages
     # Write SPENT_LAM_FILE
     slf = os.path.join(gd, SPENT_LAM_FILE)
     with open(slf, 'w') as f:

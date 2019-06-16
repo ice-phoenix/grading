@@ -168,6 +168,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # XXX: stages; args.coins
+    args.coins = contest.rankings_coins()
+    if contest.rankings_frozen():
+        print("[{}] Rankings frozen.".format(default_time))
+        exit(0)
+
     # Parse multiplier
     mutliplier = parse_sizes_file(os.path.join(args.p, contest.SIZES_FILE))
     num_probs, raw = get_raw_ranking(args.g, args.t)

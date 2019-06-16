@@ -59,7 +59,7 @@ def top_level_dirs(namelist):
     with_tld = [x for x in namelist if '/' in x]
     return with_tld
 
-# TODO: make better
+# TODO: stages
 def bad_archive_contents(namelist):
     num_probs = 300
     acc_sol = ['prob-{:03d}.sol'.format(k) for k in range(1, num_probs + 1)]

@@ -133,7 +133,7 @@ if __name__ == '__main__':
     _ = process.wait()
 
     # Grade submissions
-    # XXX: this fails if there are no submissions; SCORE_FILE will not exist
+    # this fails if there are no submissions; SCORE_FILE will not exist
     lmbd = os.path.join(app.config['BLOCKS_DIR'], contest.BLOCK_CHAIN_DESC)
     subs = os.path.join(block_path, contest.BLOCK_SUBMISSIONS_DIR)
     scr = os.path.join(block_path, contest.SCORE_FILE)

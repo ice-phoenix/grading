@@ -1,6 +1,7 @@
 from app import app, db, celery
 from app.models import Team, Submission
 import os
+from datetime import datetime
 
 ZIP_TIME_FORMAT = '%Y-%m-%d-%H-%M-%S-%f'
 ZIP_TIME_MINUTE = '%Y-%m-%d-%H-%M'
@@ -49,6 +50,78 @@ BLOCK_WINNER_FILE = "excluded.json"
 BLOCK_CONDITIONS_FILE = "next-puzzle.cond"
 BLOCK_SUBMISSIONS_DIR = "submissions"
 BLOCK_PREDEF_PUZZLE_DIR = "predef"
+
+### STAGES
+
+# ZIP_TIME_MINUTE = '%Y-%m-%d-%H-%M'
+
+# oficial
+C_TIME_STAGE_1 = C_TIME_STAGE_INITIAL       = "2019-06-21-10-00"
+C_TIME_STAGE_2 = C_TIME_STAGE_TELEPORTS     = "2019-06-21-17-00"
+C_TIME_STAGE_3 = C_TIME_STAGE_CLONES        = "2019-06-22-00-00"
+C_TIME_STAGE_4a = C_TIME_STAGE_LAM_REVEAL   = "2019-06-22-10-00"
+C_TIME_STAGE_4b = C_TIME_STAGE_LAM_MINE     = "2019-06-22-14-00"
+C_TIME_STAGE_4c = C_TIME_STAGE_LAM_STOP     = "2019-06-24-07-00"
+C_TIME_STAGE_5 = C_TIME_STAGE_FINISH        = "2019-06-24-10-00"
+
+FREEZE_LIGHTNING_START  = "2019-06-22-07-00"
+FREEZE_LIGHTNING_END    = "2019-06-22-13-00"
+FREEZE_CONTEST_START    = "2019-06-24-07-00"
+
+STAGE_1 = [C_TIME_STAGE_1]
+STAGE_2 = [C_TIME_STAGE_2]
+STAGE_3 = [C_TIME_STAGE_3]
+STAGE_4 = [C_TIME_STAGE_4a, C_TIME_STAGE_4b, C_TIME_STAGE_4c]
+STAGE_5 = [C_TIME_STAGE_5]
+
+def get_stage():
+    now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
+    if now < C_TIME_STAGE_2:
+        return C_TIME_STAGE_1
+
+    elif now < C_TIME_STAGE_3:
+        return C_TIME_STAGE_2
+
+    elif now < C_TIME_STAGE_4a:
+        return C_TIME_STAGE_3
+
+    elif now < C_TIME_STAGE_4b:
+        return C_TIME_STAGE_4a
+
+    elif now < C_TIME_STAGE_4c:
+        return C_TIME_STAGE_4b
+
+    elif now < C_TIME_STAGE_5:
+        return C_TIME_STAGE_4c
+
+    else:
+        return C_TIME_STAGE_5
+
+def get_num_probs():
+    stage = get_stage()
+    probs_by_stage = {
+        C_TIME_STAGE_1: 150,
+        C_TIME_STAGE_2: 220,
+        C_TIME_STAGE_3: 300,
+        C_TIME_STAGE_4a: 300,
+        C_TIME_STAGE_4b: 300,
+        C_TIME_STAGE_4c: 300,
+        C_TIME_STAGE_5: 0
+    }
+
+    return probs_by_stage.get(stage, 0)
+
+def rankings_frozen():
+    now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
+    lightning = (now >= FREEZE_LIGHTNING_START and now < FREEZE_LIGHTNING_END)
+    end = (now >= FREEZE_CONTEST_START)
+    return lightning or end
+
+def rankings_coins():
+    now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
+    return now >= C_TIME_STAGE_4a
+
+###
 
 def team_dir(t_id):
     return os.path.join(app.config['TEAM_DIR'], f'{t_id}/')

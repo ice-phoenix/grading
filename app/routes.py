@@ -187,6 +187,7 @@ def submit():
             bytes = f.read()
             h = hashlib.sha256(bytes).hexdigest()
 
+        # TODO: stages
         # Reject submissions that try to buy more boosters than they can afford
         num_coins = get_balance(t_id)
         good_purchase, total = validate_booster_purchase(num_coins, location)
@@ -266,6 +267,7 @@ def lambda_submit():
             db.session.add(sb)
             db.session.commit()
 
+            # TODO: stages
             process_block()
 
             sub = {'block_num': block_num, 'team_id': t_id, 'sub_id': sb.id}
@@ -366,6 +368,7 @@ def getblockinfo(block_num=None):
 # This needs to be called externally!
 @app.route('/notify/block_timer')
 def block_timer():
+    # TODO: stages
     with blockchain_lock:
         lambda_init_if_needed()
         process_block()
