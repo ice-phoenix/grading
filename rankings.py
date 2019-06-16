@@ -6,10 +6,13 @@ import os
 import math
 import numpy as np
 import pandas as pd
+import requests
 
 NUM_DIGITS = 2
 FLOAT_FORMAT = '%.{}f'.format(NUM_DIGITS)
 TEAM_NAME_MAX_LEN = 120
+BALANCES_URL = app.config['BALANCES_URL'] or "http://localhost:5000/lambda/getbalances"
+
 
 def get_team_info(root, f=contest.TEAM_ID_FILE):
     info = 0
@@ -58,8 +61,6 @@ def get_raw_ranking(grade_dir, time):
         raw_subs.append(s.T)
 
     ids = pd.DataFrame(latest_subs)
-    ids.drop(columns='path', inplace=True)
-
     scores = pd.concat(raw_subs)
     scores.reset_index(inplace=True, drop=True)
 
@@ -77,7 +78,23 @@ def compute_score(row, best, multiplier):
             total += math.ceil((best[prob] / score) * 1000 * multiplier[prob])
     return total
 
-def get_ranking(num_problems, raw_ranking, multiplier):
+def compute_unspent(row, balances):
+    t_id = row['id']
+    sp = os.path.join(row['path'], contest.SPENT_LAM_FILE)
+
+    total = balances[t_id]
+    spent = 0
+    # Get value in spent.txt
+    try:
+        with open(sp, 'r') as f:
+            spent = int(f.read())
+    except:
+        pass
+
+    unspent = total - spent
+    return unspent, total
+
+def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
     best = {}
     ranking = raw_ranking.copy()
 
@@ -94,8 +111,29 @@ def get_ranking(num_problems, raw_ranking, multiplier):
 
     scores = pd.DataFrame(scores)
     scores.columns = ['score']
-    ranking = pd.concat([ranking, scores], axis=1)
-    ranking.sort_values('score', ascending=False, inplace=True)
+
+    if consider_coins:
+        # Get LAM balances for all teams
+        response = requests.get(BALANCES_URL, allow_redirects=True)
+        balances = response.json()
+
+        unspent_coins = []
+        total_coins = []
+        for row_id in range(len(ranking)):
+            u, t = compute_unspent(ranking.loc[row_id], balances)
+            unspent_coins.append(u)
+            total_coins.append(t)
+
+        unspent = pd.DataFrame(unspent_coins)
+        unspent.columns = ['unspent']
+
+        ranking = pd.concat([ranking, scores, unspent], axis=1)
+        ranking['LAM_score'] = ranking['score'] + ranking['unspent']
+        ranking.drop(columns=['unspent'], inplace=True)
+        ranking.sort_values('LAM_score', ascending=False, inplace=True)
+    else:
+        ranking = pd.concat([ranking, scores], axis=1)
+        ranking.sort_values('score', ascending=False, inplace=True)
 
     return ranking
 
@@ -120,17 +158,18 @@ if __name__ == '__main__':
     parser.add_argument('-p', metavar='PATH', required=True, help='problems folder')
     parser.add_argument('-g', metavar='PATH', required=True, help='grades folder')
     parser.add_argument('--output-folder', metavar='PATH', required=True, help='output path to save CSV and HTML files')
+    parser.add_argument('--coins', action="store_true", help='take LAM balance into consideration?')
 
     args = parser.parse_args()
 
     # Parse multiplier
     mutliplier = parse_sizes_file(os.path.join(args.p, contest.SIZES_FILE))
     num_probs, raw = get_raw_ranking(args.g, args.t)
-    ranking = get_ranking(num_probs, raw, mutliplier)
+    ranking = get_ranking(num_probs, raw, mutliplier, args.coins)
 
     ranking.reset_index(inplace=True)
     ranking.index += 1
-    ranking.drop(columns=['index', 'id', 'time'], inplace=True)
+    ranking.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
 
     # Remove seconds and microseconds from filename
     filename = start.strftime(contest.ZIP_TIME_MINUTE)
