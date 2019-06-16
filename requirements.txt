@@ -7,3 +7,4 @@ celery
 flower
 numpy
 pandas
+requests
