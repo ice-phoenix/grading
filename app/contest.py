@@ -63,16 +63,11 @@ C_TIME_STAGE_4a = C_TIME_STAGE_LAM_REVEAL   = "2019-06-22-10-00"
 C_TIME_STAGE_4b = C_TIME_STAGE_LAM_MINE     = "2019-06-22-14-00"
 C_TIME_STAGE_4c = C_TIME_STAGE_LAM_STOP     = "2019-06-24-07-00"
 C_TIME_STAGE_5 = C_TIME_STAGE_FINISH        = "2019-06-24-10-00"
+C_TIME_STAGE_6 = C_TIME_PROFILE_FINISH      = "2019-06-24-12-00"
 
 FREEZE_LIGHTNING_START  = "2019-06-22-07-00"
 FREEZE_LIGHTNING_END    = "2019-06-22-13-00"
 FREEZE_CONTEST_START    = "2019-06-24-07-00"
-
-STAGE_1 = [C_TIME_STAGE_1]
-STAGE_2 = [C_TIME_STAGE_2]
-STAGE_3 = [C_TIME_STAGE_3]
-STAGE_4 = [C_TIME_STAGE_4a, C_TIME_STAGE_4b, C_TIME_STAGE_4c]
-STAGE_5 = [C_TIME_STAGE_5]
 
 def get_stage():
     now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
@@ -94,8 +89,11 @@ def get_stage():
     elif now < C_TIME_STAGE_5:
         return C_TIME_STAGE_4c
 
-    else:
+    elif now < C_TIME_STAGE_6:
         return C_TIME_STAGE_5
+
+    else:
+        return C_TIME_STAGE_6
 
 def get_num_probs():
     stage = get_stage()
@@ -111,9 +109,28 @@ def get_num_probs():
 
     return probs_by_stage.get(stage, 0)
 
+def can_submit():
+    stage = get_stage()
+    return stage >= C_TIME_STAGE_INITIAL and stage < C_TIME_STAGE_FINISH
+
+def can_register():
+    return can_submit()
+
+def can_edit_profile():
+    stage = get_stage()
+    return stage >= C_TIME_STAGE_INITIAL and stage < C_TIME_PROFILE_FINISH
+
 def can_buy():
     stage = get_stage()
-    return stage >= C_TIME_STAGE_4a
+    return stage >= C_TIME_STAGE_LAM_REVEAL
+
+def blockchain_can_see():
+    stage = get_stage()
+    return stage >= C_TIME_STAGE_LAM_REVEAL
+
+def blockchain_can_mine():
+    stage = get_stage()
+    return stage >= C_TIME_STAGE_LAM_MINE and stage < C_TIME_STAGE_LAM_STOP
 
 def rankings_frozen():
     now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)

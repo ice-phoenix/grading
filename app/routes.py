@@ -5,6 +5,7 @@ from app import db
 from app.models import Team, Submission, Block, BlockSubmission
 from app.grade import grade
 from app.contest import team_dir, sub_dir, grades_dir, block_dir, block_sub_dir, profile_dir,\
+    can_submit, can_register, can_edit_profile, blockchain_can_see, blockchain_can_mine,\
     ZIP_TIME_FORMAT, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
     PROFILE_FILE, PROFILE_ZIP, PROFILE_HASH,\
     BLOCK_SOL_FILE, BLOCK_WINNER_FILE, BLOCK_NEXT_PUZZLE_FILE, BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE
@@ -25,6 +26,9 @@ DB_TIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    if not can_submit():
+        return render_template('register-closed.html', title='Registration is closed!'), 403
+
     form = RegisterForm(meta={'csrf': False})
     # This also checks that the team name is not already taken
     if form.validate_on_submit():
@@ -111,6 +115,9 @@ def read_profile(t_id):
 
 @app.route('/profile/<priv_id>', methods=['GET', 'POST'])
 def profile(priv_id):
+    if request.method == 'POST' and (not can_edit_profile()):
+        return render_template('profile-closed.html', title='Profile edits are closed!'), 403
+
     t = Team.query.filter(Team.private_id==priv_id).first()
     if t is None:
         return redirect(url_for('login'))
@@ -153,6 +160,9 @@ def profile(priv_id):
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
+    if not can_submit():
+        return render_template('submissions-closed.html', title='Submissions are closed!'), 403
+
     form = SubmitForm(meta={'csrf': False})
     if form.validate_on_submit():
         t_priv = form.private_id.data
@@ -235,6 +245,12 @@ blockchain_lock = Lock()
 
 @app.route('/lambda/submit', methods=['POST'])
 def lambda_submit():
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
+    if not blockchain_can_mine():
+        return jsonify({'errors': {'cannot_mine': 'mining is not open!'}}), 403
+
     form = LambdaSubmitForm(meta={'csrf': False})
 
     if form.validate_on_submit():
@@ -268,7 +284,8 @@ def lambda_submit():
             db.session.add(sb)
             db.session.commit()
 
-            # TODO: stages
+            # This doesn't need to be staged: execution will not reach here if
+            # mining is disabled
             process_block()
 
             sub = {'block_num': block_num, 'team_id': t_id, 'sub_id': sb.id}
@@ -287,6 +304,9 @@ def lambda_submit():
 
 @app.route('/lambda/getblockchaininfo')
 def getblockchaininfo():
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
     block = get_current_block()
     ts = block.created.timestamp()
     subs = BlockSubmission.query.filter(BlockSubmission.block_num==block.id).count()
@@ -302,14 +322,23 @@ def getblockchaininfo():
 
 @app.route('/lambda/getbalance/<t_id>')
 def getbalance(t_id):
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
     return jsonify(get_balance(t_id))
 
 @app.route('/lambda/getbalances')
 def getbalances():
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
     return jsonify(get_balances())
 
 @app.route('/lambda/getmininginfo')
 def getmininginfo():
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
     block = get_current_block()
     excluded = get_excluded(block.id)
     task = get_problem(block.id)
@@ -326,6 +355,9 @@ def getmininginfo():
 @app.route('/lambda/getblockinfo')
 @app.route('/lambda/getblockinfo/<block_num>')
 def getblockinfo(block_num=None):
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
     # After this, block_num is either None or int
     try:
         block_num = int(block_num)
@@ -369,7 +401,14 @@ def getblockinfo(block_num=None):
 # This needs to be called externally!
 @app.route('/notify/block_timer')
 def block_timer():
-    # TODO: stages
+    # XXX: stages
+    if not blockchain_can_see():
+        abort(404)
+    if not blockchain_can_mine():
+        # Ensure genesis block exists when mining period starts
+        lambda_init_if_needed()
+        return jsonify({'errors': {'cannot_mine': 'mining is not open yet!'}}), 403
+
     with blockchain_lock:
         lambda_init_if_needed()
         process_block()
