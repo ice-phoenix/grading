@@ -112,6 +112,7 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
     scores = pd.DataFrame(scores)
     scores.columns = ['score']
 
+    hodl = None
     if consider_coins:
         # Get LAM balances for all teams
         response = requests.get(BALANCES_URL, allow_redirects=True)
@@ -125,17 +126,22 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
             total_coins.append(t)
 
         unspent = pd.DataFrame(unspent_coins)
-        unspent.columns = ['unspent']
+        unspent.columns = ['unspent_LAM']
+
+        hodl = ranking.copy()
+        hodl = pd.concat([hodl, unspent], axis=1)
+        hodl.sort_values('unspent_LAM', ascending=False, inplace=True)
 
         ranking = pd.concat([ranking, scores, unspent], axis=1)
-        ranking['LAM_score'] = ranking['score'] + ranking['unspent']
-        ranking.drop(columns=['unspent'], inplace=True)
+        ranking['LAM_score'] = ranking['score'] + ranking['unspent_LAM']
+        ranking.drop(columns=['unspent_LAM'], inplace=True)
         ranking.sort_values('LAM_score', ascending=False, inplace=True)
+
     else:
         ranking = pd.concat([ranking, scores], axis=1)
         ranking.sort_values('score', ascending=False, inplace=True)
 
-    return ranking
+    return ranking, hodl
 
 def parse_sizes_file(path):
     mult = {}
@@ -165,11 +171,17 @@ if __name__ == '__main__':
     # Parse multiplier
     mutliplier = parse_sizes_file(os.path.join(args.p, contest.SIZES_FILE))
     num_probs, raw = get_raw_ranking(args.g, args.t)
-    ranking = get_ranking(num_probs, raw, mutliplier, args.coins)
+    ranking, hodl = get_ranking(num_probs, raw, mutliplier, args.coins)
 
+    # Reset indices
     ranking.reset_index(inplace=True)
     ranking.index += 1
     ranking.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
+
+    if hodl is not None:
+        hodl.reset_index(inplace=True)
+        hodl.index += 1
+        hodl.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
 
     # Remove seconds and microseconds from filename
     filename = start.strftime(contest.ZIP_TIME_MINUTE)
@@ -183,6 +195,7 @@ if __name__ == '__main__':
     ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True)
     ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center')
 
+    # Write latest.html
     html_latest = os.path.join(args.output_folder, 'latest.html')
     wrapper = """<!DOCTYPE html>
     <html>
@@ -204,3 +217,27 @@ if __name__ == '__main__':
 
     with open(html_latest, 'w') as f:
         f.write(page)
+
+    # Write hodl.html
+    if hodl is not None:
+        hodl_latest = os.path.join(args.output_folder, 'hodl.html')
+        wrapper = """<!DOCTYPE html>
+        <html>
+        <head>
+        <title>Biggest HODLers</title>
+        <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
+        </head>
+        <center>
+        <h1>Biggest HODLers</h1>
+        <pre>Last updated: {}</pre>
+        {}
+        </center>
+        </html>"""
+
+        time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
+        pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
+        table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
+        page=wrapper.format(time, table)
+
+        with open(hodl_latest, 'w') as f:
+            f.write(page)
