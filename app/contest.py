@@ -111,6 +111,10 @@ def get_num_probs():
 
     return probs_by_stage.get(stage, 0)
 
+def can_buy():
+    stage = get_stage()
+    return stage >= C_TIME_STAGE_4a
+
 def rankings_frozen():
     now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
     lightning = (now >= FREEZE_LIGHTNING_START and now < FREEZE_LIGHTNING_END)

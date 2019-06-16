@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Email, ValidationError
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 import tempfile, zipfile
 from werkzeug.utils import secure_filename
-from app import db
+from app import db, contest
 from app.models import Team
 
 # Registration
@@ -59,12 +59,15 @@ def top_level_dirs(namelist):
     with_tld = [x for x in namelist if '/' in x]
     return with_tld
 
-# TODO: stages
+# XXX: stages
 def bad_archive_contents(namelist):
-    num_probs = 300
+    num_probs = contest.get_num_probs()
     acc_sol = ['prob-{:03d}.sol'.format(k) for k in range(1, num_probs + 1)]
-    acc_buy = ['prob-{:03d}.buy'.format(k) for k in range(1, num_probs + 1)]
-    acc = set(acc_sol + acc_buy)
+    acc = set(acc_sol)
+
+    if contest.can_buy():
+        acc_buy = ['prob-{:03d}.buy'.format(k) for k in range(1, num_probs + 1)]
+        acc = set(acc_sol + acc_buy)
 
     bad = [x for x in namelist if x not in acc]
     return bad

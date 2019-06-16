@@ -154,7 +154,7 @@ def profile(priv_id):
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
     form = SubmitForm(meta={'csrf': False})
-    if form.validate_on_submit():  
+    if form.validate_on_submit():
         t_priv = form.private_id.data
         team = Team.query.filter(Team.private_id==t_priv).first()
         t_id = team.id
@@ -187,7 +187,8 @@ def submit():
             bytes = f.read()
             h = hashlib.sha256(bytes).hexdigest()
 
-        # TODO: stages
+        # XXX: stages; we don't need a check here, since submissions with .buy
+        # will be rejected outright
         # Reject submissions that try to buy more boosters than they can afford
         num_coins = get_balance(t_id)
         good_purchase, total = validate_booster_purchase(num_coins, location)

@@ -1,6 +1,7 @@
 from app import app, celery
 from celery.utils.log import get_task_logger
-from app.contest import team_dir, sub_dir, grades_sub_dir, ZIP_TIME_FORMAT, HASH_FILE, SCORE_FILE, TIMING_FILE, SPENT_LAM_FILE
+from app.contest import team_dir, sub_dir, grades_sub_dir, can_buy, get_num_probs, \
+    ZIP_TIME_FORMAT, HASH_FILE, SCORE_FILE, TIMING_FILE, SPENT_LAM_FILE
 import random
 import time
 import os, tempfile
@@ -109,17 +110,22 @@ def grade(self, t_id, t_priv, t_name, ts, filename, hash, spent_coins):
         if fn.endswith(".sol") or fn.endswith(".buy"):
             os.remove(os.path.join(sd, fn))
 
-    # TODO: stages
+    # XXX: stages
+    num_probs = get_num_probs()
     # Copy score from submission directory to grades directory
     src_fn = rf
     dst_fn = os.path.join(gd, SCORE_FILE)
-    shutil.copyfile(src_fn, dst_fn)
+    with open(src_fn, 'r') as src:
+        with open(dst_fn, 'w') as dst:
+            head = [next(src) for x in range(num_probs)]
+            dst.writelines(head)
 
-    # TODO: stages
-    # Write SPENT_LAM_FILE
-    slf = os.path.join(gd, SPENT_LAM_FILE)
-    with open(slf, 'w') as f:
-        f.write(f'{spent_coins}')
+    # XXX: stages
+    if can_buy():
+        # Write SPENT_LAM_FILE
+        slf = os.path.join(gd, SPENT_LAM_FILE)
+        with open(slf, 'w') as f:
+            f.write(f'{spent_coins}')
 
     # Update latest
     link = os.path.join(td, 'latest-graded')
