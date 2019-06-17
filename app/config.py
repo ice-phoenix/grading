@@ -11,6 +11,7 @@ class Config(object):
     NOTIFY_SECRET_KEY = os.environ.get('NOTIFY_SECRET_KEY') or '1aab559c46c53fb6a6804ab7ae3e826b'
 
     BALANCES_URL = os.environ.get('BALANCES_URL') or "http://localhost:5000/lambda/getbalances"
+    TEAMS_URL = os.environ.get('TEAMS_URL') or "http://localhost:5000/teams"
 
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(DB_DIR, 'app.db')

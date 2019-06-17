@@ -50,9 +50,18 @@ def decide_accept_sub(t_id, form):
 
     return len(errors) == 0, block, errors
 
+def create_block_zero_if_needed():
+    block = Block.query.filter(Block.id == 0).first()
+    ts = datetime.fromtimestamp(0)
+    if block is None:
+        block = Block(id=0, created=ts)
+        db.session.add(block)
+        db.session.commit()
+    return block
+
 def lambda_init_if_needed():
     # Creates the database record for the first block if it doesn't exist
-    block = Block.query.order_by(Block.id.desc()).first()
+    block = Block.query.filter(Block.id == 1).first()
     if block is None:
         block = Block()
         db.session.add(block)
@@ -61,7 +70,7 @@ def lambda_init_if_needed():
     return block
 
 def get_current_block():
-    return lambda_init_if_needed()
+    return Block.query.order_by(Block.id.desc()).first()
 
 def process_block():
     block = Block.query.order_by(Block.id.desc()).first()

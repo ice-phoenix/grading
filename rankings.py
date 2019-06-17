@@ -12,7 +12,7 @@ NUM_DIGITS = 2
 FLOAT_FORMAT = '%.{}f'.format(NUM_DIGITS)
 TEAM_NAME_MAX_LEN = 120
 BALANCES_URL = app.config['BALANCES_URL'] or "http://localhost:5000/lambda/getbalances"
-
+TEAMS_URL = app.config['TEAMS_URL'] or "http://localhost:5000/teams"
 
 def get_team_info(root, f=contest.TEAM_ID_FILE):
     info = 0
@@ -61,7 +61,7 @@ def get_raw_ranking(grade_dir, time):
         raw_subs.append(s.T)
 
     ids = pd.DataFrame(latest_subs)
-    scores = pd.concat(raw_subs)
+    scores = pd.concat(raw_subs) if len(raw_subs) > 0 else pd.DataFrame()
     scores.reset_index(inplace=True, drop=True)
 
     # Automatically handles "expanding" subs to num_problems (for submissions
@@ -109,6 +109,24 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
     for row_id in range(len(ranking)):
         scores.append(compute_score(raw_ranking.loc[row_id], best, multiplier))
 
+    # Collect teams with no submission
+    response = requests.get(TEAMS_URL, allow_redirects=True)
+    teams = response.json()
+    to_add = []
+    for t_id, t_name in teams.items():
+        exists = (len(ranking) > 0) and (ranking['id'] == t_id).any()
+        if not exists:
+            to_add.append({'id': t_id, 'name': t_name, 'path': '', 'time': ''})
+            scores.append(0)
+
+    # Insert teams with no submission into ranking
+    to_add = pd.DataFrame(to_add)
+    ranking = ranking.append(to_add, ignore_index=True)
+
+    # If len(ranking) == 0, just break; no one has registered yet
+    if len(ranking) == 0:
+        return None, None
+
     scores = pd.DataFrame(scores)
     scores.columns = ['score']
 
@@ -126,16 +144,16 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
             total_coins.append(t)
 
         unspent = pd.DataFrame(unspent_coins)
-        unspent.columns = ['unspent_LAM']
+        unspent.columns = ['unspent LAM']
 
         hodl = ranking.copy()
         hodl = pd.concat([hodl, unspent], axis=1)
-        hodl.sort_values('unspent_LAM', ascending=False, inplace=True)
+        hodl.sort_values('unspent LAM', ascending=False, inplace=True)
 
         ranking = pd.concat([ranking, scores, unspent], axis=1)
-        ranking['LAM_score'] = ranking['score'] + ranking['unspent_LAM']
-        ranking.drop(columns=['unspent_LAM'], inplace=True)
-        ranking.sort_values('LAM_score', ascending=False, inplace=True)
+        ranking['score + unspent LAM'] = ranking['score'] + ranking['unspent LAM']
+        ranking.drop(columns=['unspent LAM'], inplace=True)
+        ranking.sort_values('score + unspent LAM', ascending=False, inplace=True)
 
     else:
         ranking = pd.concat([ranking, scores], axis=1)
@@ -169,7 +187,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # XXX: stages; args.coins
-    args.coins = contest.rankings_coins()
+    args.coins = args.coins or contest.rankings_coins()
     if contest.rankings_frozen():
         print("[{}] Rankings frozen.".format(default_time))
         exit(0)
@@ -178,16 +196,6 @@ if __name__ == '__main__':
     mutliplier = parse_sizes_file(os.path.join(args.p, contest.SIZES_FILE))
     num_probs, raw = get_raw_ranking(args.g, args.t)
     ranking, hodl = get_ranking(num_probs, raw, mutliplier, args.coins)
-
-    # Reset indices
-    ranking.reset_index(inplace=True)
-    ranking.index += 1
-    ranking.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
-
-    if hodl is not None:
-        hodl.reset_index(inplace=True)
-        hodl.index += 1
-        hodl.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
 
     # Remove seconds and microseconds from filename
     filename = start.strftime(contest.ZIP_TIME_MINUTE)
@@ -198,6 +206,22 @@ if __name__ == '__main__':
     # Create folder if it doesn't exist
     os.makedirs(args.output_folder, exist_ok=True)
 
+    # Reset indices and make something up if nothing exists yet
+    if ranking is not None:
+        ranking.reset_index(inplace=True)
+        ranking.index += 1
+        ranking.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
+    else:
+        ranking = pd.DataFrame()
+
+    if hodl is not None:
+        hodl.reset_index(inplace=True)
+        hodl.index += 1
+        hodl.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
+    else:
+        hodl = pd.DataFrame()
+
+    ## Write the files!
     ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True)
     ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center')
 
@@ -224,8 +248,8 @@ if __name__ == '__main__':
     with open(html_latest, 'w') as f:
         f.write(page)
 
-    # Write hodl.html
-    if hodl is not None:
+    if args.coins:
+        # Write hodl.html
         hodl_latest = os.path.join(args.output_folder, 'hodl.html')
         wrapper = """<!DOCTYPE html>
         <html>
@@ -235,6 +259,7 @@ if __name__ == '__main__':
         </head>
         <center>
         <h1>Biggest HODLers</h1>
+        <h2>(Teams with most unspent LAM)</h2>
         <pre>Last updated: {}</pre>
         {}
         </center>

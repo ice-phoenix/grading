@@ -56,6 +56,7 @@ BLOCK_PREDEF_PUZZLE_DIR = "predef"
 # ZIP_TIME_MINUTE = '%Y-%m-%d-%H-%M'
 
 # oficial
+C_TIME_STAGE_0 = C_TIME_STAGE_BEFORE        = "2000-01-01-00-00"
 C_TIME_STAGE_1 = C_TIME_STAGE_INITIAL       = "2019-06-21-10-00"
 C_TIME_STAGE_2 = C_TIME_STAGE_TELEPORTS     = "2019-06-21-17-00"
 C_TIME_STAGE_3 = C_TIME_STAGE_CLONES        = "2019-06-22-00-00"
@@ -64,6 +65,12 @@ C_TIME_STAGE_4b = C_TIME_STAGE_LAM_MINE     = "2019-06-22-14-00"
 C_TIME_STAGE_4c = C_TIME_STAGE_LAM_STOP     = "2019-06-24-07-00"
 C_TIME_STAGE_5 = C_TIME_STAGE_FINISH        = "2019-06-24-10-00"
 C_TIME_STAGE_6 = C_TIME_PROFILE_FINISH      = "2019-06-24-12-00"
+
+STAGES = [
+    C_TIME_STAGE_0, C_TIME_STAGE_1, C_TIME_STAGE_2, C_TIME_STAGE_3,
+    C_TIME_STAGE_4a, C_TIME_STAGE_4b, C_TIME_STAGE_4c,
+    C_TIME_STAGE_5, C_TIME_STAGE_6, C_TIME_STAGE_6
+]
 
 FREEZE_LIGHTNING_START  = "2019-06-22-07-00"
 FREEZE_LIGHTNING_END    = "2019-06-22-13-00"
@@ -119,6 +126,28 @@ def get_stage():
     else:
         return C_TIME_STAGE_6
 
+def get_remaining_seconds():
+    next_stage = STAGES[STAGES.index(get_stage()) + 1]
+    next_stage_start = datetime.strptime(next_stage, ZIP_TIME_MINUTE)
+    now = datetime.utcnow()
+    diff = (next_stage_start - now).total_seconds()
+    return diff
+
+def get_stage_name():
+    stage = get_stage()
+    names = {
+        C_TIME_STAGE_0: "0 - contest has not started",
+        C_TIME_STAGE_1: "1 - initial",
+        C_TIME_STAGE_2: "2 - teleports",
+        C_TIME_STAGE_3: "3 - clones",
+        C_TIME_STAGE_4a: "4a - LAM reveal",
+        C_TIME_STAGE_4b: "4b - LAM mining",
+        C_TIME_STAGE_4c: "4c - LAM stopped mining",
+        C_TIME_STAGE_5: "5 - contest has ended",
+        C_TIME_STAGE_6: "6 - profiles can no longer be updated"
+    }
+    return names.get(stage, 'UNKNOWN STAGE??')
+
 def get_num_probs():
     stage = get_stage()
     probs_by_stage = {
@@ -129,7 +158,8 @@ def get_num_probs():
         C_TIME_STAGE_4a: 300,
         C_TIME_STAGE_4b: 300,
         C_TIME_STAGE_4c: 300,
-        C_TIME_STAGE_5: 0
+        C_TIME_STAGE_5: 0,
+        C_TIME_STAGE_6: 0
     }
 
     return probs_by_stage.get(stage, 0)
