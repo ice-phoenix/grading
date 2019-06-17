@@ -70,6 +70,7 @@ FREEZE_LIGHTNING_END    = "2019-06-22-13-00"
 FREEZE_CONTEST_START    = "2019-06-24-07-00"
 
 # XXX Testing
+C_TIME_STAGE_0 = C_TIME_STAGE_BEFORE        = "2000-01-01-00-00"
 C_TIME_STAGE_1 = C_TIME_STAGE_INITIAL       = "2019-06-17-09-00"
 C_TIME_STAGE_2 = C_TIME_STAGE_TELEPORTS     = "2019-06-17-09-05"
 C_TIME_STAGE_3 = C_TIME_STAGE_CLONES        = "2019-06-17-09-10"
@@ -90,7 +91,11 @@ BLOCK_LATE_WAIT_FOR_SECS = 5 * 60
 
 def get_stage():
     now = datetime.utcnow().strftime(ZIP_TIME_MINUTE)
-    if now < C_TIME_STAGE_2:
+
+    if now < C_TIME_STAGE_1:
+        return C_TIME_STAGE_0
+
+    elif now < C_TIME_STAGE_2:
         return C_TIME_STAGE_1
 
     elif now < C_TIME_STAGE_3:
@@ -117,6 +122,7 @@ def get_stage():
 def get_num_probs():
     stage = get_stage()
     probs_by_stage = {
+        C_TIME_STAGE_0: 0,
         C_TIME_STAGE_1: 150,
         C_TIME_STAGE_2: 220,
         C_TIME_STAGE_3: 300,
