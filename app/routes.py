@@ -6,7 +6,8 @@ from app.models import Team, Submission, Block, BlockSubmission
 from app.grade import grade
 from app.contest import team_dir, sub_dir, grades_dir, block_dir, block_sub_dir, profile_dir,\
     can_submit, can_register, can_edit_profile, blockchain_can_see, blockchain_can_mine,\
-    ZIP_TIME_FORMAT, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
+    get_stage_name, rankings_frozen, get_remaining_seconds,\
+    ZIP_TIME_FORMAT, ZIP_TIME_MINUTE, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
     PROFILE_FILE, PROFILE_ZIP, PROFILE_HASH,\
     BLOCK_SOL_FILE, BLOCK_WINNER_FILE, BLOCK_NEXT_PUZZLE_FILE, BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE
 from app.blockchain import *
@@ -397,6 +398,16 @@ def getblockinfo(block_num=None):
 
     return jsonify(info)
 
+@app.route('/stage')
+def stage():
+    info = {
+        'server_time': datetime.utcnow().strftime(ZIP_TIME_MINUTE),
+        'stage': get_stage_name(),
+        'stage_remaining_seconds': get_remaining_seconds(),
+        'rankings_frozen': rankings_frozen()
+    }
+    return jsonify(info)
+
 @app.route('/teams')
 def teams():
     teams = {}
@@ -408,17 +419,16 @@ def teams():
 @app.route('/notify/block_timer')
 def block_timer():
     # XXX: stages
+    create_block_zero_if_needed()
     if not blockchain_can_see():
         abort(404)
     if not blockchain_can_mine():
-        # Ensure genesis block exists when mining period starts
-        lambda_init_if_needed()
-        return jsonify({'errors': {'cannot_mine': 'mining is not open yet!'}}), 403
+        abort(403)
 
     with blockchain_lock:
         lambda_init_if_needed()
         process_block()
-    return 'OK'
+    return ''
 
 @ app.route('/notify/block_created', methods=['POST'])
 def block_created():

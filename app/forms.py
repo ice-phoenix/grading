@@ -106,6 +106,6 @@ class SubmitForm(FlaskForm):
 class LambdaSubmitForm(FlaskForm):
     private_id = StringField('Private ID', validators=[no_redundant_spaces, priv_id_exists])
     block_num = IntegerField('Block number')
-    solution = FileField('Solution file', validators=[FileRequired(), FileAllowed(['sol'], 'Solutions must have a .sol extension.')])
-    puzzle = FileField('Puzzle file', validators=[FileRequired(), FileAllowed(['desc'], 'Puzzle must have a .desc extension.')])
+    solution = FileField('Solution file', validators=[FileRequired(), FileAllowed(['sol'], 'Task solutions must have a .sol extension.')])
+    puzzle = FileField('Puzzle file', validators=[FileRequired(), FileAllowed(['desc'], 'Puzzle solutions must have a .desc extension.')])
     submit = SubmitField('Send submission')

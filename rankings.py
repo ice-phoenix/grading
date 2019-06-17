@@ -206,21 +206,19 @@ if __name__ == '__main__':
     # Create folder if it doesn't exist
     os.makedirs(args.output_folder, exist_ok=True)
 
-    # Reset indices
+    # Reset indices and make something up if nothing exists yet
     if ranking is not None:
         ranking.reset_index(inplace=True)
         ranking.index += 1
         ranking.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
+    else:
+        ranking = pd.DataFrame()
 
     if hodl is not None:
         hodl.reset_index(inplace=True)
         hodl.index += 1
         hodl.drop(columns=['index', 'id', 'time', 'path'], inplace=True)
-
-    # Make up something if nothing exists yet
-    if ranking is None:
-        ranking = pd.DataFrame()
-    if hodl is None:
+    else:
         hodl = pd.DataFrame()
 
     ## Write the files!
@@ -250,26 +248,27 @@ if __name__ == '__main__':
     with open(html_latest, 'w') as f:
         f.write(page)
 
-    # Write hodl.html
-    hodl_latest = os.path.join(args.output_folder, 'hodl.html')
-    wrapper = """<!DOCTYPE html>
-    <html>
-    <head>
-    <title>Biggest HODLers</title>
-    <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
-    </head>
-    <center>
-    <h1>Biggest HODLers</h1>
-    <h2>(Teams with most unspent LAM)</h2>
-    <pre>Last updated: {}</pre>
-    {}
-    </center>
-    </html>"""
+    if args.coins:
+        # Write hodl.html
+        hodl_latest = os.path.join(args.output_folder, 'hodl.html')
+        wrapper = """<!DOCTYPE html>
+        <html>
+        <head>
+        <title>Biggest HODLers</title>
+        <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
+        </head>
+        <center>
+        <h1>Biggest HODLers</h1>
+        <h2>(Teams with most unspent LAM)</h2>
+        <pre>Last updated: {}</pre>
+        {}
+        </center>
+        </html>"""
 
-    time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
-    pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
-    table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
-    page=wrapper.format(time, table)
+        time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
+        pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
+        table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
+        page=wrapper.format(time, table)
 
-    with open(hodl_latest, 'w') as f:
-        f.write(page)
+        with open(hodl_latest, 'w') as f:
+            f.write(page)
