@@ -397,6 +397,12 @@ def getblockinfo(block_num=None):
 
     return jsonify(info)
 
+@app.route('/teams')
+def teams():
+    teams = {}
+    for t in Team.query.all():
+        teams[t.id] = t.name
+    return jsonify(teams)
 
 # This needs to be called externally!
 @app.route('/notify/block_timer')
@@ -439,19 +445,19 @@ def block_created():
 
 # TODO: remove
 # TESTING
-@app.route('/testing/register/<int:n>')
-def register_many(n):
-    ids = []
+# @app.route('/testing/register/<int:n>')
+# def register_many(n):
+#     ids = []
 
-    for i in range(n):
-        t_name = 'test_' + ''.join([random.choice(string.ascii_letters) for n in range(12)])
-        t_email = '{}@example.com'.format(t_name)
-        t_priv = os.urandom(app.config['PRIV_ID_LEN']).hex()    # Generate private ID
+#     for i in range(n):
+#         t_name = 'test_' + ''.join([random.choice(string.ascii_letters) for n in range(12)])
+#         t_email = '{}@example.com'.format(t_name)
+#         t_priv = os.urandom(app.config['PRIV_ID_LEN']).hex()    # Generate private ID
 
-        ids.append(t_priv)
+#         ids.append(t_priv)
 
-        t = Team(name=t_name, email=t_email, private_id=t_priv)
-        db.session.add(t)
+#         t = Team(name=t_name, email=t_email, private_id=t_priv)
+#         db.session.add(t)
 
-    db.session.commit()
-    return '\n'.join(ids)
+#     db.session.commit()
+#     return '\n'.join(ids)
