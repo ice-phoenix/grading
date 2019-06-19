@@ -6,7 +6,7 @@ from app.models import Team, Submission, Block, BlockSubmission
 from app.grade import grade
 from app.contest import team_dir, sub_dir, grades_dir, block_dir, block_sub_dir, profile_dir,\
     can_submit, can_register, can_edit_profile, blockchain_can_see, blockchain_can_mine,\
-    get_stage_name, rankings_frozen, get_remaining_seconds,\
+    C_TIME_STAGE_INITIAL, C_TIME_STAGE_FINISH, get_stage, get_stage_name, rankings_frozen, get_remaining_seconds,\
     ZIP_TIME_FORMAT, ZIP_TIME_MINUTE, SUBMISSIONS_FILE, TEAM_NAME_FILE, TEAM_ID_FILE,\
     PROFILE_FILE, PROFILE_ZIP, PROFILE_HASH,\
     BLOCK_SOL_FILE, BLOCK_WINNER_FILE, BLOCK_NEXT_PUZZLE_FILE, BLOCK_PROBLEM_DESC, BLOCK_CONDITIONS_FILE
@@ -407,8 +407,11 @@ def getblockinfo(block_num=None):
 @app.route('/stage')
 def stage():
     info = {
+        'contest_start_time': C_TIME_STAGE_INITIAL,
+        'contest_end_time': C_TIME_STAGE_FINISH,
         'server_time': datetime.utcnow().strftime(ZIP_TIME_MINUTE),
         'stage': get_stage_name(),
+        'stage_start_time': get_stage(),
         'stage_remaining_seconds': get_remaining_seconds(),
         'rankings_frozen': rankings_frozen()
     }
