@@ -72,6 +72,12 @@ def lambda_init_if_needed():
 def get_current_block():
     return Block.query.order_by(Block.id.desc()).first()
 
+def process_last_block():
+    block = get_current_block()
+    num_subs = BlockSubmission.query.filter(BlockSubmission.block_num == block.id).count()
+    if num_subs > 0 and (not block.scheduled_proc):
+        process_block()
+
 def process_block():
     block = Block.query.order_by(Block.id.desc()).first()
 
