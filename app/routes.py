@@ -257,7 +257,15 @@ def lambda_submit():
     if not blockchain_can_see():
         abort(404)
     if not blockchain_can_mine():
-        return jsonify({'errors': {'cannot_mine': 'mining is not open!'}}), 403
+        # If mining period has ended, BUT the current block has > 0 subs,
+        # continue to accept submissions
+        if get_stage() >= C_TIME_STAGE_LAM_STOP:
+                block = get_current_block()
+                num_subs = BlockSubmission.query.filter(BlockSubmission.block_num == block.id).count()
+                if num_subs == 0:
+                    return jsonify({'errors': {'cannot_mine': 'mining is not open!'}}), 403
+        else:
+            return jsonify({'errors': {'cannot_mine': 'mining is not open!'}}), 403
 
     form = LambdaSubmitForm(meta={'csrf': False})
 
@@ -433,7 +441,7 @@ def block_timer():
     if not blockchain_can_see():
         abort(404)
     if not blockchain_can_mine():
-        # If mining has just ended, make sure we process the last block
+        # If mining has just ended, make sure we process the last block once it becomes complete
         if get_stage() >= C_TIME_STAGE_LAM_STOP:
             process_last_block()
         abort(403)
