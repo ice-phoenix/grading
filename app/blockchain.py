@@ -153,7 +153,7 @@ def validate_booster_purchase(num_coins, filename):
             with open(cfn,'wb') as wfd:
                 for fn in buy:
                     with open(fn,'rb') as fd:
-                        shutil.copyfileobj(fd, wfd)
+                        wfd.write(fd.read().strip())
 
             with open(cfn, 'r') as f:
                 count = collections.Counter(f.read())
