@@ -138,6 +138,7 @@ def get_conditions(block_num=None):
 
 def validate_booster_purchase(num_coins, filename):
     total = 0
+    extra = None
 
     # This is nice since it removes the directory & files automatically
     with tempfile.TemporaryDirectory() as tmp:
@@ -156,7 +157,8 @@ def validate_booster_purchase(num_coins, filename):
 
             with open(cfn, 'r') as f:
                 count = collections.Counter(f.read())
+                extra = set(count.keys()) - set(BOOSTER_PRICES.keys())
                 for booster in BOOSTER_PRICES.keys():
                     total += count.get(booster, 0) * BOOSTER_PRICES[booster]
 
-    return total <= num_coins, total
+    return total <= num_coins, total, extra
