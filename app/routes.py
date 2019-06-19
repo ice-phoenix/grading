@@ -202,7 +202,13 @@ def submit():
         # will be rejected outright
         # Reject submissions that try to buy more boosters than they can afford
         num_coins = get_balance(t_id)
-        good_purchase, total = validate_booster_purchase(num_coins, location)
+        good_purchase, total, extra = False, 0, None
+        try:
+            good_purchase, total, extra = validate_booster_purchase(num_coins, location)
+        except UnicodeDecodeError:
+            return render_template('boosters-fail.html', not_decoded=True)
+        if extra is not None and len(extra) > 0:
+            return render_template('boosters-fail.html', extra=extra)
         if not good_purchase:
             # Status code: 402 Payment Required
             return render_template('boosters-fail.html', num_coins=num_coins, total=total), 402

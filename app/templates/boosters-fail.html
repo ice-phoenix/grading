@@ -1,10 +1,20 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if not_decoded or extra %}
+<h1>Something is wrong with your booster purchase!</h1>
+{% else %}
 <h1>You can't afford the boosters you tried to buy!</h1>
+{% endif %}
 <ul>
     <li>Your submission has been rejected.</li>
+    {% if not_decoded %}
+    <li>You submitted <samp>.buy</samp> files that we could not parse as UTF-8.</li>
+    {% elif extra %}
+    <li>Your <samp>.buy</samp> files included characters that are not boosters: <samp>{{ extra }}</samp></li>
+    {% else %}
     <li>You have {{ num_coins }} LAM, but tried to purchase boosters worth {{ total }} LAM.</li>
     <li>Earn more LAM or buy fewer boosters, and then resubmit!</li>
+    {% endif %}
 </ul>
 {% endblock %}
