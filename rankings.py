@@ -191,7 +191,7 @@ def write_latest(ranking, args):
 
     time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
     pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
-    table = ranking.to_html(float_format=FLOAT_FORMAT, justify='center')
+    table = ranking.to_html(float_format=FLOAT_FORMAT, justify='center', encoding='utf-8')
     page=wrapper.format(time, table)
 
     with open(html_latest, 'w') as f:
@@ -217,7 +217,7 @@ def write_hodl(hodl, args):
 
     time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
     pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
-    table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
+    table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center', encoding='utf-8')
     page=wrapper.format(time, table)
 
     with open(hodl_latest, 'w') as f:
@@ -278,8 +278,8 @@ if __name__ == '__main__':
         hodl = pd.DataFrame()
 
     ## Write the files!
-    ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True)
-    ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center')
+    ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True, encoding='utf-8')
+    ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center', encoding='utf-8')
 
     write_latest(ranking, args)
 
