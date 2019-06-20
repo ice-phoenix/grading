@@ -172,6 +172,57 @@ def parse_sizes_file(path):
         
     return mult
 
+def write_latest(ranking, args):
+    # Write latest.html
+    html_latest = os.path.join(args.output_folder, 'latest.html')
+    wrapper = """<!DOCTYPE html>
+    <html>
+    <head>
+    <title>Live Rankings</title>
+    <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
+    </head>
+    <center>
+    <h1>Live Rankings</h1>
+    <pre>Last updated: {}</pre>
+    {}
+    </center>
+    </html>"""
+
+    time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
+    pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
+    table = ranking.to_html(float_format=FLOAT_FORMAT, justify='center')
+    page=wrapper.format(time, table)
+
+    with open(html_latest, 'w') as f:
+        f.write(page)
+
+def write_hodl(hodl, args):
+    # Write hodl.html
+    hodl_latest = os.path.join(args.output_folder, 'hodl.html')
+    wrapper = """<!DOCTYPE html>
+    <html>
+    <head>
+    <title>Biggest HODLers</title>
+    <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
+    </head>
+    <center>
+    <h1>Biggest HODLers</h1>
+    <h2>(Teams with most unspent LAM)</h2>
+    <pre>Last updated: {}</pre>
+    {}
+    </center>
+    </html>"""
+
+    time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
+    pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
+    table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
+    page=wrapper.format(time, table)
+
+    with open(hodl_latest, 'w') as f:
+        f.write(page)
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute rankings.')
 
@@ -188,6 +239,9 @@ if __name__ == '__main__':
 
     # XXX: stages; args.coins
     args.coins = args.coins or contest.rankings_coins()
+    # Write empty hodl.html (to handle stage transition when rankings frozen)
+    if args.coins:
+        write_hodl(pd.DataFrame(), args)
     if contest.rankings_frozen():
         print("[{}] Rankings frozen.".format(default_time))
         exit(0)
@@ -225,50 +279,7 @@ if __name__ == '__main__':
     ranking.to_csv(csv_output, float_format=FLOAT_FORMAT, index=True)
     ranking.to_html(html_output, float_format=FLOAT_FORMAT, justify='center')
 
-    # Write latest.html
-    html_latest = os.path.join(args.output_folder, 'latest.html')
-    wrapper = """<!DOCTYPE html>
-    <html>
-    <head>
-    <title>Live Rankings</title>
-    <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
-    </head>
-    <center>
-    <h1>Live Rankings</h1>
-    <pre>Last updated: {}</pre>
-    {}
-    </center>
-    </html>"""
-
-    time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
-    pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
-    table = ranking.to_html(float_format=FLOAT_FORMAT, justify='center')
-    page=wrapper.format(time, table)
-
-    with open(html_latest, 'w') as f:
-        f.write(page)
+    write_latest(ranking, args)
 
     if args.coins:
-        # Write hodl.html
-        hodl_latest = os.path.join(args.output_folder, 'hodl.html')
-        wrapper = """<!DOCTYPE html>
-        <html>
-        <head>
-        <title>Biggest HODLers</title>
-        <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
-        </head>
-        <center>
-        <h1>Biggest HODLers</h1>
-        <h2>(Teams with most unspent LAM)</h2>
-        <pre>Last updated: {}</pre>
-        {}
-        </center>
-        </html>"""
-
-        time = datetime.strptime(args.t, contest.ZIP_TIME_FORMAT).strftime("%c")
-        pd.option_context('display.max_colwidth', TEAM_NAME_MAX_LEN)
-        table = hodl.to_html(float_format=FLOAT_FORMAT, justify='center')
-        page=wrapper.format(time, table)
-
-        with open(hodl_latest, 'w') as f:
-            f.write(page)
+        write_hodl(hodl, args)
