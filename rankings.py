@@ -178,6 +178,7 @@ def write_latest(ranking, args):
     wrapper = """<!DOCTYPE html>
     <html>
     <head>
+    <meta charset="utf-8">
     <title>Live Rankings</title>
     <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
     </head>
@@ -202,6 +203,7 @@ def write_hodl(hodl, args):
     wrapper = """<!DOCTYPE html>
     <html>
     <head>
+    <meta charset="utf-8">
     <title>Biggest HODLers</title>
     <link rel="stylesheet" href="https://icfpcontest2019.github.io/assets/main.css">
     </head>
