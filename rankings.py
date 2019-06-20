@@ -243,7 +243,10 @@ if __name__ == '__main__':
     args.coins = args.coins or contest.rankings_coins()
     # Write empty hodl.html (to handle stage transition when rankings frozen)
     if args.coins:
-        write_hodl(pd.DataFrame(), args)
+        hodl_path = os.path.join(args.output_folder, 'hodl.html')
+        # ... only if file doesn't exist already
+        if not os.path.exists(hodl_path):
+            write_hodl(pd.DataFrame(), args)
     if contest.rankings_frozen():
         print("[{}] Rankings frozen.".format(default_time))
         exit(0)
