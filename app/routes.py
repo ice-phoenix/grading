@@ -251,7 +251,7 @@ def submit():
 
 blockchain_lock = Lock()
 
-@app.route('/lambda')
+@app.route('/lambda/')
 def lambda_page():
     if not blockchain_can_see():
         abort(404)
