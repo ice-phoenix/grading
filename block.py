@@ -32,7 +32,8 @@ def process_scores(score_file):
     # Have something to do only if there is a submission
     if len(sc) > 0:
         # minimum non-zero score
-        best_score = sc[1][sc[1] > 0].min()
+        non_bad = sc[sc[2] == 'GOOD']
+        best_score = non_bad[1][non_bad[1] > 0].min()
         # Normalise and sort scores
         sc[1] = sc[1].apply(lambda s: 0 if s == 0 else best_score / s)
         sc.sort_values([1, 2], ascending=False, inplace=True)
@@ -77,11 +78,11 @@ def allocate_coins(balance_file, scores, winner, late):
     new_balance = balance
 
     scores.reset_index(drop=True, inplace=True)
+    print("All submissions:\n", scores)
+
     scores = scores[scores[2] == 'GOOD']
     # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
     n_scores = list(scores[1].unique())
-
-    print("All submissions:\n", scores)
 
     # smallest rewarded share
     srs = 0
