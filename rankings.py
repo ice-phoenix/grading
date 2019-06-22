@@ -11,8 +11,8 @@ import requests
 NUM_DIGITS = 2
 FLOAT_FORMAT = '%.{}f'.format(NUM_DIGITS)
 TEAM_NAME_MAX_LEN = 120
-BALANCES_URL = app.config['BALANCES_URL'] or "http://localhost:5000/lambda/getbalances"
-TEAMS_URL = app.config['TEAMS_URL'] or "http://localhost:5000/teams"
+BALANCES_URL = "https://lambdacoin.org/lambda/getbalances"
+TEAMS_URL = "https://monadic-lab.org/teams"
 
 def get_team_info(root, f=contest.TEAM_ID_FILE):
     info = 0
