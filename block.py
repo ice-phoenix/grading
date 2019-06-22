@@ -77,6 +77,7 @@ def allocate_coins(balance_file, scores, winner, late):
     new_balance = balance
 
     scores.reset_index(drop=True, inplace=True)
+    scores = scores[scores[2] == 'GOOD']
     # Only reward to top BLOCK_REWARD_SEL (might be more if ties / fewer if not enough subs)
     n_scores = list(scores[1].unique())
 
@@ -91,7 +92,6 @@ def allocate_coins(balance_file, scores, winner, late):
 
     # filter to qualifying submissions
     scores = scores[(scores[1] >= srs)]
-    scores = scores[scores[2] == 'GOOD']
     scores.reset_index(drop=True, inplace=True)
     print("Qualifying submissions:\n", scores)
     
