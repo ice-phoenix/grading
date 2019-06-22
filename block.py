@@ -91,6 +91,7 @@ def allocate_coins(balance_file, scores, winner, late):
 
     # filter to qualifying submissions
     scores = scores[(scores[1] >= srs)]
+    scores = scores[scores[2] == 'GOOD']
     scores.reset_index(drop=True, inplace=True)
     print("Qualifying submissions:\n", scores)
     
