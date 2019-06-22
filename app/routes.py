@@ -308,7 +308,7 @@ def lambda_submit():
 
             # This doesn't need to be staged: execution will not reach here if
             # mining is disabled
-            # process_block()
+            process_block()
 
             sub = {'block_num': block_num, 'team_id': t_id, 'sub_id': sb.id}
             return jsonify({'success': sub})
