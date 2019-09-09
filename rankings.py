@@ -110,7 +110,7 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
         scores.append(compute_score(raw_ranking.loc[row_id], best, multiplier))
 
     # Collect teams with no submission
-    response = requests.get(TEAMS_URL, allow_redirects=True)
+    response = requests.get(TEAMS_URL, allow_redirects=True, verify=False)
     teams = response.json()
     to_add = []
     for t_id, t_name in teams.items():
@@ -133,7 +133,7 @@ def get_ranking(num_problems, raw_ranking, multiplier, consider_coins):
     hodl = None
     if consider_coins:
         # Get LAM balances for all teams
-        response = requests.get(BALANCES_URL, allow_redirects=True)
+        response = requests.get(BALANCES_URL, allow_redirects=True, verify=False)
         balances = response.json()
 
         unspent_coins = []
