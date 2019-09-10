@@ -257,6 +257,13 @@ def lambda_page():
         abort(404)
     return render_template('lambda.html', title="ICO coming soon!")
 
+@app.route('/lambda/init')
+def lambda_init():
+    if not blockchain_can_see():
+        abort(404)
+    create_block_zero_if_needed()
+    return jsonify({"msg": "Done!"})
+
 @app.route('/lambda/submit', methods=['POST'])
 def lambda_submit():
     # XXX: stages
