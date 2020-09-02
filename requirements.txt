@@ -8,3 +8,4 @@ flower
 numpy
 pandas
 requests
+email_validator
